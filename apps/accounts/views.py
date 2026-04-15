@@ -17,6 +17,10 @@ from .models import Etablissement, Medecin, Role
 from .services import SupabaseAdminError, SupabaseAdminService
 
 
+def home_view(request):
+    return render(request, "home/index.html")
+
+
 def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -90,7 +94,7 @@ def dashboard(request):
                 "facilities_total": facilities_qs.count(),
                 "facilities_active": facilities_qs.filter(actif=True).count(),
                 "doctors_total": doctors_qs.count(),
-                "doctors_active": doctors_qs.filter(is_active=True).count(),
+                "doctors_active": doctors_qs.filter(user__is_active=True).count(),
                 "users_total": users_qs.count(),
                 "users_active": users_qs.filter(is_active=True).count(),
             },
@@ -101,10 +105,10 @@ def dashboard(request):
         }
         return render(request, "dashboard/super_admin.html", context)
 
-    if role == "medecin":
+    if role in ["medecin", "doctor"]:
         return render(request, "dashboard/doctor.html")
 
-    if role == "secretaire":
+    if role in ["secretaire", "secretary"]:
         return render(request, "dashboard/secretary.html")
 
     if role == "patient":

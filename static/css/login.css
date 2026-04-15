@@ -1,0 +1,79 @@
+body {
+    background: #f8f9fa;
+    color: #191c1d;
+}
+
+body nav {
+    background: #f8fafc;
+    border-bottom: 1px solid rgba(0, 72, 141, 0.08);
+}
+
+body nav span.font-headline {
+    color: #00488d;
+}
+
+body main {
+    background-color: #f8f9fa;
+}
+
+body .glass-panel {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(194, 198, 212, 0.5);
+}
+
+body h1.text-primary,
+body .text-primary {
+    color: #00488d !important;
+}
+
+body .text-on-surface-variant {
+    color: #424752 !important;
+}
+
+body .bg-surface-container-highest {
+    background-color: #e7e8e9 !important;
+}
+
+body .bg-surface-container-lowest {
+    background-color: #ffffff !important;
+}
+
+body .border-outline-variant\/20 {
+    border-color: rgba(194, 198, 212, 0.2) !important;
+}
+
+body input[type="text"],
+body input[type="password"] {
+    background: #eef2f7 !important;
+    color: #191c1d !important;
+    border: 1px solid #c2c6d4 !important;
+}
+
+body input[type="text"]::placeholder,
+body input[type="password"]::placeholder {
+    color: #727783 !important;
+}
+
+body input[type="text"]:focus,
+body input[type="password"]:focus {
+    border-color: #00488d !important;
+    box-shadow: 0 0 0 3px rgba(0, 72, 141, 0.12) !important;
+}
+
+body button[type="submit"] {
+    background: linear-gradient(180deg, #00488d 0%, #005fb8 100%) !important;
+    color: #ffffff !important;
+}
+
+body footer {
+    background: #f8fafc;
+    border-top: 1px solid rgba(0, 72, 141, 0.08);
+}
+
+body footer a {
+    color: #64748b;
+}
+
+body footer a:hover {
+    color: #00488d;
+}
