@@ -1,0 +1,107 @@
+{% extends "base/base.html" %}
+
+{% block title %}Clinical Architect - Facilities{% endblock %}
+
+{% block content %}
+<div class="px-8 pt-8 pb-4">
+    <div class="flex justify-between items-end gap-4 flex-wrap">
+        <div>
+            <h2 class="text-3xl font-extrabold text-on-surface tracking-tight headline-font">Facilities</h2>
+            <p class="text-on-surface-variant mt-1">Gestion de {{ facilities_count }} établissement{{ facilities_count|pluralize }}.</p>
+        </div>
+        <a class="flex items-center px-6 py-3 bg-gradient-to-b from-primary to-primary-container text-on-primary rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-100 transition-all" href="{% url 'super_admin_facility_create' %}">
+            <span class="material-symbols-outlined mr-2">add_business</span>
+            Nouvel établissement
+        </a>
+    </div>
+</div>
+
+<div class="px-8 pb-8 flex-1">
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden">
+        <form class="p-6 flex flex-wrap gap-4 items-center bg-surface-container-lowest border-b border-surface-container" method="get">
+            <input name="q" type="hidden" value="{{ filters.q }}">
+            <select class="bg-surface-container-low border-none rounded-lg text-sm font-medium py-2 px-4 focus:ring-1 focus:ring-primary/20" name="type">
+                <option value="">Tous les types</option>
+                <option value="cabinet" {% if filters.type == "cabinet" %}selected{% endif %}>Cabinet</option>
+                <option value="hopital" {% if filters.type == "hopital" %}selected{% endif %}>Hopital</option>
+                <option value="clinique" {% if filters.type == "clinique" %}selected{% endif %}>Clinique</option>
+                <option value="laboratoire" {% if filters.type == "laboratoire" %}selected{% endif %}>Laboratoire</option>
+                <option value="centre_radiologie" {% if filters.type == "centre_radiologie" %}selected{% endif %}>Centre de radiologie</option>
+                <option value="pharmacie_partenaire" {% if filters.type == "pharmacie_partenaire" %}selected{% endif %}>Pharmacie partenaire</option>
+            </select>
+            <select class="bg-surface-container-low border-none rounded-lg text-sm font-medium py-2 px-4 focus:ring-1 focus:ring-primary/20" name="status">
+                <option value="">Tous les statuts</option>
+                <option value="active" {% if filters.status == "active" %}selected{% endif %}>Actif</option>
+                <option value="inactive" {% if filters.status == "inactive" %}selected{% endif %}>Inactif</option>
+            </select>
+            <div class="ml-auto flex items-center gap-3">
+                <button class="flex items-center px-4 py-2 bg-primary text-on-primary rounded-lg transition-all text-sm font-medium" type="submit">Filtrer</button>
+                <a class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all text-sm font-medium" href="{% url 'super_admin_facility_list' %}">Réinitialiser</a>
+            </div>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Nom</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Type</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Admin</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Localisation</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Contact</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Statut</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for facility in facilities %}
+                    <tr class="hover:bg-surface-container-low/50 transition-colors group">
+                        <td class="py-5 px-6">
+                            <p class="text-sm font-bold text-on-surface">{{ facility.nom }}</p>
+                            <p class="text-xs text-on-surface-variant">Code postal: {{ facility.code|default:"Non renseigné" }}</p>
+                        </td>
+                        <td class="py-5 px-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-secondary-container text-on-secondary-container">{{ facility.type_display_name }}</span>
+                        </td>
+                        <td class="py-5 px-6">
+                            <p class="text-sm text-on-surface">{{ facility.admin_display_name|default:"Non assigne" }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ facility.admin.email|default:"-" }}</p>
+                        </td>
+                        <td class="py-5 px-6">
+                            <p class="text-sm text-on-surface">{{ facility.ville|default:"-" }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ facility.pays|default:"-" }}</p>
+                        </td>
+                        <td class="py-5 px-6">
+                            <p class="text-sm text-on-surface">{{ facility.email|default:"Pas d'email" }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ facility.telephone|default:"Pas de téléphone" }}</p>
+                        </td>
+                        <td class="py-5 px-6">
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 rounded-full {% if facility.actif %}bg-emerald-500{% else %}bg-error{% endif %} mr-2"></div>
+                                <span class="text-xs font-bold text-on-surface">{% if facility.actif %}Actif{% else %}Inactif{% endif %}</span>
+                            </div>
+                        </td>
+                        <td class="py-5 px-6 text-right">
+                            <div class="flex justify-end items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a class="p-2 hover:bg-surface-container-high rounded-lg text-primary transition-all" href="{% url 'super_admin_facility_detail' facility.id %}" title="Voir"><span class="material-symbols-outlined text-xl">visibility</span></a>
+                                <a class="p-2 hover:bg-surface-container-high rounded-lg text-on-surface-variant transition-all" href="{% url 'super_admin_facility_edit' facility.id %}" title="Modifier"><span class="material-symbols-outlined text-xl">edit_square</span></a>
+                                <form action="{% url 'super_admin_facility_delete' facility.id %}" method="post" onsubmit="return confirm('Supprimer cet établissement ?');">
+                                    {% csrf_token %}
+                                    <button class="p-2 hover:bg-error-container hover:text-error rounded-lg text-on-surface-variant transition-all" type="submit" title="Supprimer">
+                                        <span class="material-symbols-outlined text-xl">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="px-6 py-10 text-center text-on-surface-variant" colspan="6">Aucun établissement trouvé.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Doctor Dashboard</title>
+</head>
+<body>
+    <h2>Dashboard Médecin</h2>
+    <p>Bienvenue Dr. {{ request.user.last_name }}</p>
+    <p>Rôle : {{ request.user.role.display_name }}</p>
+    <a href="/logout/">Logout</a>
+</body>
+</html>

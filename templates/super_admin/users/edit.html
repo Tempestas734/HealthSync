@@ -1,0 +1,66 @@
+{% extends "base/base.html" %}
+
+{% block title %}Clinical Architect - {{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8">
+    <div class="max-w-4xl bg-surface-container-lowest rounded-2xl p-8 shadow-sm">
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-on-surface">{{ page_heading }}</h3>
+            <p class="text-sm text-on-surface-variant mt-1">Update the user profile and role assignment.</p>
+        </div>
+
+        <form class="grid grid-cols-1 md:grid-cols-2 gap-6" method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="md:col-span-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <label class="block">
+                <span class="text-sm font-semibold text-on-surface">First name</span>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}<p class="mt-2 text-xs text-error">{{ form.first_name.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="block">
+                <span class="text-sm font-semibold text-on-surface">Last name</span>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}<p class="mt-2 text-xs text-error">{{ form.last_name.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="block md:col-span-2">
+                <span class="text-sm font-semibold text-on-surface">Email</span>
+                {{ form.email }}
+                {% if form.email.errors %}<p class="mt-2 text-xs text-error">{{ form.email.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="block">
+                <span class="text-sm font-semibold text-on-surface">Phone</span>
+                {{ form.phone }}
+                {% if form.phone.errors %}<p class="mt-2 text-xs text-error">{{ form.phone.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="block">
+                <span class="text-sm font-semibold text-on-surface">Role</span>
+                {{ form.role }}
+                {% if form.role.errors %}<p class="mt-2 text-xs text-error">{{ form.role.errors.0 }}</p>{% endif %}
+            </label>
+
+            <div class="md:col-span-2 flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-4">
+                {{ form.is_active }}
+                <div>
+                    <p class="text-sm font-semibold text-on-surface">Active account</p>
+                    <p class="text-xs text-on-surface-variant">Inactive users cannot authenticate.</p>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 flex items-center justify-end gap-3 pt-2">
+                <a class="px-4 py-2 rounded-xl bg-surface-container-high text-on-surface font-semibold text-sm" href="{% url 'super_admin_user_detail' user_obj.id %}">
+                    Cancel
+                </a>
+                <button class="px-5 py-2 rounded-xl bg-primary text-on-primary font-semibold text-sm shadow-lg shadow-primary/10" type="submit">
+                    {{ submit_label }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

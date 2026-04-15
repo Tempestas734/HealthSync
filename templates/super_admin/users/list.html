@@ -1,0 +1,125 @@
+{% extends "base/base.html" %}
+
+{% block title %}Clinical Architect - User Management{% endblock %}
+
+{% block content %}
+<div class="px-8 pt-8 pb-4">
+    <div class="flex justify-between items-end gap-4 flex-wrap">
+        <div>
+            <h2 class="text-3xl font-extrabold text-on-surface tracking-tight headline-font">User Management</h2>
+            <p class="text-on-surface-variant mt-1">Manage permissions and access for {{ users_count }} user{{ users_count|pluralize }}.</p>
+        </div>
+        <a class="flex items-center px-6 py-3 bg-gradient-to-b from-primary to-primary-container text-on-primary rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-100 transition-all" href="{% url 'super_admin_user_create' %}">
+            <span class="material-symbols-outlined mr-2">person_add</span>
+            Create New User
+        </a>
+    </div>
+</div>
+
+<div class="px-8 pb-8 flex-1">
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden">
+        <form class="p-6 flex flex-wrap gap-4 items-center bg-surface-container-lowest border-b border-surface-container" method="get">
+            <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+                <span class="text-sm font-semibold text-on-surface-variant">Filter by:</span>
+                <div class="flex space-x-2 flex-wrap gap-y-2">
+                    <input name="q" type="hidden" value="{{ filters.q }}">
+                    <select class="bg-surface-container-low border-none rounded-lg text-sm font-medium py-2 px-4 focus:ring-1 focus:ring-primary/20" name="role">
+                        <option value="">All Roles</option>
+                        {% for role in roles %}
+                        <option value="{{ role.code }}" {% if filters.role == role.code %}selected{% endif %}>{{ role.nom }}</option>
+                        {% endfor %}
+                    </select>
+                    <select class="bg-surface-container-low border-none rounded-lg text-sm font-medium py-2 px-4 focus:ring-1 focus:ring-primary/20" name="status">
+                        <option value="">All Statuses</option>
+                        <option value="active" {% if filters.status == "active" %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if filters.status == "inactive" %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="ml-auto flex items-center space-x-3">
+                <button class="flex items-center px-4 py-2 bg-primary text-on-primary rounded-lg transition-all text-sm font-medium" type="submit">
+                    <span class="material-symbols-outlined mr-2 text-lg">filter_alt</span>
+                    Apply
+                </button>
+                <a class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all text-sm font-medium" href="{% url 'super_admin_user_list' %}">
+                    <span class="material-symbols-outlined mr-2 text-lg">restart_alt</span>
+                    Reset
+                </a>
+            </div>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Name</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Contact</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Role</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Created</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Status</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for user_obj in users %}
+                    <tr class="hover:bg-surface-container-low/50 transition-colors group">
+                        <td class="py-5 px-6">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold mr-4">
+                                    {{ user_obj.first_name|default:"?"|slice:":1"|upper }}{{ user_obj.last_name|default:"?"|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-on-surface">{{ user_obj.first_name|default:"" }} {{ user_obj.last_name|default:"" }}</p>
+                                    <p class="text-xs text-on-surface-variant">ID: {{ user_obj.id }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-5 px-6">
+                            <p class="text-sm text-on-surface">{{ user_obj.email|default:"No email" }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ user_obj.phone|default:"No phone" }}</p>
+                        </td>
+                        <td class="py-5 px-6">
+                            {% if user_obj.role %}
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-secondary-container text-on-secondary-container">{{ user_obj.role_display_name }}</span>
+                            {% else %}
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant">Aucun role</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-5 px-6">
+                            <p class="text-sm text-on-surface">{{ user_obj.created_at|date:"M d, Y" }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ user_obj.updated_at|date:"H:i" }}</p>
+                        </td>
+                        <td class="py-5 px-6">
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 rounded-full {% if user_obj.is_active %}bg-emerald-500{% else %}bg-error{% endif %} mr-2"></div>
+                                <span class="text-xs font-bold text-on-surface">{% if user_obj.is_active %}Active{% else %}Inactive{% endif %}</span>
+                            </div>
+                        </td>
+                        <td class="py-5 px-6 text-right">
+                            <div class="flex justify-end items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a class="p-2 hover:bg-surface-container-high rounded-lg text-primary transition-all" href="{% url 'super_admin_user_detail' user_obj.id %}" title="View user"><span class="material-symbols-outlined text-xl">visibility</span></a>
+                                <a class="p-2 hover:bg-surface-container-high rounded-lg text-on-surface-variant transition-all" href="{% url 'super_admin_user_edit' user_obj.id %}" title="Edit user"><span class="material-symbols-outlined text-xl">edit_square</span></a>
+                                <form action="{% url 'super_admin_user_delete' user_obj.id %}" method="post" onsubmit="return confirm('Delete this user?');">
+                                    {% csrf_token %}
+                                    <button class="p-2 hover:bg-error-container hover:text-error rounded-lg text-on-surface-variant transition-all" title="Delete user" type="submit">
+                                        <span class="material-symbols-outlined text-xl">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="px-6 py-10 text-center text-on-surface-variant" colspan="6">No users found for the current filters.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="p-6 bg-surface-container-low/30 border-t border-surface-container flex items-center justify-between gap-4 flex-wrap">
+            <p class="text-sm text-on-surface-variant">Showing <span class="font-bold text-on-surface">{{ users_count }}</span> user{{ users_count|pluralize }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

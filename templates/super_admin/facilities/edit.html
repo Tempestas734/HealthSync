@@ -1,0 +1,134 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Clinical Architect - {{ page_title }}{% endblock %}
+
+{% block extra_head %}
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8">
+    <div class="max-w-6xl bg-surface-container-lowest rounded-2xl p-8 shadow-sm">
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-on-surface">{{ page_heading }}</h3>
+        </div>
+        <form class="space-y-8" method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <section class="bg-surface-container-low rounded-2xl p-6 space-y-6">
+                <div>
+                    <h4 class="text-lg font-bold text-on-surface">Informations générales</h4>
+                    <p class="text-sm text-on-surface-variant mt-1">Nom, type, contact et statut de l'établissement.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <label class="block">
+                        <span class="text-sm font-semibold text-on-surface">Nom</span>
+                        {{ form.nom }}
+                        {% if form.nom.errors %}<p class="mt-2 text-xs text-error">{{ form.nom.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-semibold text-on-surface">Code postal</span>
+                        {{ form.code }}
+                        {% if form.code.errors %}<p class="mt-2 text-xs text-error">{{ form.code.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-semibold text-on-surface">Type d'etablissement</span>
+                        {{ form.type_etablissement }}
+                        {% if form.type_etablissement.errors %}<p class="mt-2 text-xs text-error">{{ form.type_etablissement.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-semibold text-on-surface">Admin etablissement</span>
+                        {{ form.admin }}
+                        {% if form.admin.errors %}<p class="mt-2 text-xs text-error">{{ form.admin.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-semibold text-on-surface">Telephone</span>
+                        {{ form.telephone }}
+                        {% if form.telephone.errors %}<p class="mt-2 text-xs text-error">{{ form.telephone.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block md:col-span-2">
+                        <span class="text-sm font-semibold text-on-surface">Email</span>
+                        {{ form.email }}
+                        {% if form.email.errors %}<p class="mt-2 text-xs text-error">{{ form.email.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block md:col-span-2">
+                        <span class="text-sm font-semibold text-on-surface">Site web</span>
+                        {{ form.site_web }}
+                        {% if form.site_web.errors %}<p class="mt-2 text-xs text-error">{{ form.site_web.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block md:col-span-2">
+                        <span class="text-sm font-semibold text-on-surface">Description</span>
+                        {{ form.description }}
+                        {% if form.description.errors %}<p class="mt-2 text-xs text-error">{{ form.description.errors.0 }}</p>{% endif %}
+                    </label>
+                    <div class="md:col-span-2 flex items-center gap-3 rounded-xl bg-surface-container-high px-4 py-4">
+                        {{ form.actif }}
+                        <div>
+                            <p class="text-sm font-semibold text-on-surface">Etablissement actif</p>
+                            <p class="text-xs text-on-surface-variant">Decoche si l'etablissement doit etre masque des operations actives.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-surface-container-low rounded-2xl p-6 space-y-6">
+                <div>
+                    <h4 class="text-lg font-bold text-on-surface">Localisation</h4>
+                    <p class="text-sm text-on-surface-variant mt-1">Adresse, coordonnées et position sur carte dans un bloc indépendant sous les informations générales.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <label class="block">
+                        <span class="text-sm font-semibold text-on-surface">Pays</span>
+                        {{ form.pays }}
+                        {% if form.pays.errors %}<p class="mt-2 text-xs text-error">{{ form.pays.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-semibold text-on-surface">Ville</span>
+                        {{ form.ville }}
+                        {% if form.ville.errors %}<p class="mt-2 text-xs text-error">{{ form.ville.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block md:col-span-2">
+                        <span class="text-sm font-semibold text-on-surface">Adresse</span>
+                        {{ form.adresse }}
+                        {% if form.adresse.errors %}<p class="mt-2 text-xs text-error">{{ form.adresse.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-semibold text-on-surface">Latitude</span>
+                        {{ form.latitude }}
+                        {% if form.latitude.errors %}<p class="mt-2 text-xs text-error">{{ form.latitude.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-semibold text-on-surface">Longitude</span>
+                        {{ form.longitude }}
+                        {% if form.longitude.errors %}<p class="mt-2 text-xs text-error">{{ form.longitude.errors.0 }}</p>{% endif %}
+                    </label>
+                    <div class="md:col-span-2">
+                        <div class="flex items-center justify-between gap-4 mb-3">
+                            <div>
+                                <h4 class="text-sm font-semibold text-on-surface">Position sur la carte</h4>
+                                <p class="text-xs text-on-surface-variant">Clique sur la carte ou déplace le marqueur pour mettre à jour la position.</p>
+                            </div>
+                        </div>
+                        <div class="facility-map border border-surface-container" data-facility-map data-interactive="true" data-latitude-input="id_latitude" data-longitude-input="id_longitude" data-address-input="id_adresse" data-city-input="id_ville" data-country-input="id_pays" data-postal-code-input="id_code"></div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <a class="px-4 py-2 rounded-xl bg-surface-container-high text-on-surface font-semibold text-sm" href="{% url 'super_admin_facility_detail' facility.id %}">Annuler</a>
+                <button class="px-5 py-2 rounded-xl bg-primary text-on-primary font-semibold text-sm shadow-lg shadow-primary/10" type="submit">{{ submit_label }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{% static 'js/facility_location_options.js' %}"></script>
+<script src="{% static 'js/facility_map.js' %}"></script>
+{% endblock %}

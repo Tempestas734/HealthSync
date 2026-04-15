@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clinical Architect - Secure Login</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline-variant": "#c2c6d4",
+              "primary-fixed": "#d6e3ff",
+              "on-background": "#191c1d",
+              "on-tertiary-fixed": "#341100",
+              "surface-variant": "#e1e3e4",
+              "on-error-container": "#93000a",
+              "surface": "#f8f9fa",
+              "on-tertiary-fixed-variant": "#783100",
+              "secondary-container": "#d6e4f7",
+              "inverse-surface": "#2e3132",
+              "tertiary-fixed": "#ffdbcb",
+              "tertiary-container": "#a04401",
+              "tertiary-fixed-dim": "#ffb691",
+              "inverse-on-surface": "#f0f1f2",
+              "on-tertiary": "#ffffff",
+              "on-primary-container": "#cadcff",
+              "on-secondary-fixed": "#0f1d2a",
+              "error": "#ba1a1a",
+              "surface-container-highest": "#e1e3e4",
+              "outline": "#727783",
+              "on-surface": "#191c1d",
+              "error-container": "#ffdad6",
+              "on-primary-fixed-variant": "#00468b",
+              "on-secondary": "#ffffff",
+              "primary-container": "#005fb8",
+              "background": "#f8f9fa",
+              "on-surface-variant": "#424752",
+              "secondary-fixed": "#d6e4f7",
+              "primary": "#00488d",
+              "on-primary": "#ffffff",
+              "surface-tint": "#005db5",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f3f4f5",
+              "secondary-fixed-dim": "#bac8da",
+              "on-secondary-container": "#586676",
+              "surface-container-high": "#e7e8e9",
+              "on-secondary-fixed-variant": "#3b4857",
+              "surface-bright": "#f8f9fa",
+              "on-tertiary-container": "#ffd1bc",
+              "inverse-primary": "#a8c8ff",
+              "primary-fixed-dim": "#a8c8ff",
+              "on-error": "#ffffff",
+              "tertiary": "#7b3200",
+              "surface-dim": "#d9dadb",
+              "secondary": "#53606f",
+              "on-primary-fixed": "#001b3d",
+              "surface-container": "#edeeef"
+            },
+            fontFamily: {
+              "headline": ["Manrope", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .bg-medical-abstract {
+            background-image: radial-gradient(circle at 2px 2px, #d6e3ff 1px, transparent 0);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface min-h-screen flex flex-col overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="bg-slate-50 dark:bg-slate-950 flex justify-between items-center w-full px-6 py-4 docked full-width top-0 z-50">
+<div class="flex items-center gap-3">
+<span class="text-2xl font-black tracking-tighter text-blue-800 dark:text-blue-300 font-headline">Clinical Architect</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors active:scale-95 duration-200 rounded-full">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex items-center justify-center relative px-4 py-20 bg-medical-abstract">
+<!-- Decorative subtle medical tone elements -->
+<div class="absolute top-20 left-20 w-64 h-64 bg-primary-fixed/20 rounded-full blur-[100px]"></div>
+<div class="absolute bottom-20 right-20 w-96 h-96 bg-secondary-container/20 rounded-full blur-[120px]"></div>
+<!-- Login Card -->
+<div class="w-full max-w-md z-10">
+<div class="glass-panel bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/20 shadow-[0_40px_100px_-20px_rgba(0,72,141,0.06)]">
+<div class="mb-10 text-center">
+<h1 class="font-headline font-extrabold text-3xl text-primary tracking-tight mb-2">Secure Access</h1>
+<p class="text-on-surface-variant font-medium">Administrative Control Interface</p>
+{% for message in messages %}
+<p>{{ message }}</p>
+{% endfor %}
+</div>
+<form method="post" class="space-y-6">
+    {% csrf_token %}
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="font-headline font-bold text-sm tracking-wide text-on-surface-variant block uppercase px-1">Email/Username</label>
+<div class="relative group">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-outline material-symbols-outlined pointer-events-none group-focus-within:text-primary transition-colors">person</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-highest border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all text-on-surface font-medium placeholder:text-outline/50 outline-none" placeholder="administrator@clinical.arch" type="text" name="email" required/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-end px-1">
+<label class="font-headline font-bold text-sm tracking-wide text-on-surface-variant block uppercase">Password</label>
+<a class="text-xs font-semibold text-primary hover:text-primary-container transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative group">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-outline material-symbols-outlined pointer-events-none group-focus-within:text-primary transition-colors">lock</span>
+<input class="w-full pl-12 pr-12 py-4 bg-surface-container-highest border-none rounded-xl focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all text-on-surface font-medium placeholder:text-outline/50 outline-none" placeholder="••••••••••••" type="password" name="password" required/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<!-- Remember Me -->
+<div class="flex items-center gap-3 px-1">
+<div class="relative flex items-center">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20 cursor-pointer bg-surface-container-highest" id="remember_me" type="checkbox"/>
+</div>
+<label class="text-sm font-medium text-on-surface-variant cursor-pointer select-none" for="remember_me">Remember this device for 30 days</label>
+</div>
+<!-- Sign In Button -->
+<button class="w-full py-4 bg-gradient-to-b from-primary to-primary-container text-on-primary font-headline font-bold text-lg rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2" type="submit">
+                        Sign In
+                        <span class="material-symbols-outlined text-xl">arrow_forward</span>
+</button>
+</form>
+<!-- Security Assurance -->
+<div class="mt-10 pt-8 border-t border-outline-variant/10 flex items-center justify-center gap-6 grayscale opacity-60">
+<div class="flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+<span class="material-symbols-outlined text-base">verified_user</span>
+                        HIPAA compliant
+                    </div>
+<div class="flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+<span class="material-symbols-outlined text-base">security</span>
+                        AES-256 Encrypted
+                    </div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row justify-between items-center w-full px-8 py-6 gap-4 border-t border-slate-200/20 dark:border-slate-800/20 docked full-width bottom-0">
+<div class="text-sm font-bold text-slate-400 font-headline">
+            © 2024 Clinical Architect Administration. All rights reserved.
+        </div>
+<div class="flex gap-8">
+<a class="font-inter text-xs font-medium tracking-wide uppercase text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-300 transition-colors cursor-pointer opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-inter text-xs font-medium tracking-wide uppercase text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-300 transition-colors cursor-pointer opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="font-inter text-xs font-medium tracking-wide uppercase text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-300 transition-colors cursor-pointer opacity-80 hover:opacity-100" href="#">Security Compliance</a>
+</div>
+</footer>
+<!-- Image for Context (Internal logic use) -->
+<div class="hidden">
+<img alt="Background" data-alt="Soft abstract medical blue gradient background pattern" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAvKuyQAwP59UU83NJZYe2znE_6jbRfbqZqaO-zhFWGuf1pF-RoxyCokS2QO8BXQpgxWvvfU9Ucgc9EVyX1H6IWQUb45NXr8GiPZbk3D3PGGo7a6TxTWfsix3jses8dtgfmWLeXSSL-tjMJHpLmX8IGB9LNuYtj44neVtQrhvefWUMNjc7IGB4c-ljnpuuoFkQ4J0ZPuRVom8PtraXIat0smXz4_sCPpkIQGE6fKGi3n6SNewTr8jHJRpL0gQVfSFAA-6jxkao"/>
+</div>
+</body></html>
