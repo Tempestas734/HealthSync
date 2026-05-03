@@ -1,0 +1,182 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Admin Etablissement{% endblock %}
+
+{% block content %}
+<div class="flex-1 overflow-y-auto px-8 py-8 space-y-8">
+    <header class="flex flex-col gap-2">
+        <h1 class="text-4xl font-extrabold headline-font tracking-tighter text-on-surface">Hospital Command Center</h1>
+        <p class="text-secondary font-medium">
+            {% if primary_facility %}
+            {{ primary_facility.nom }}{% if primary_facility.ville %} • {{ primary_facility.ville }}{% endif %}
+            {% else %}
+            Espace de gestion de l'etablissement
+            {% endif %}
+        </p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div class="bg-surface-container-lowest p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
+            <div class="flex justify-between items-start mb-4">
+                <div class="p-3 bg-secondary-container rounded-xl text-primary">
+                    <span class="material-symbols-outlined fill-icon">domain</span>
+                </div>
+                <span class="text-xs font-bold text-primary bg-primary-fixed/30 px-2 py-1 rounded">{% if stats.managed_facilities_active %}active{% else %}inactive{% endif %}</span>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-secondary">Assigned Facility</p>
+                <p class="text-4xl font-extrabold headline-font text-on-surface mt-1">{{ stats.managed_facilities_total }}</p>
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
+            <div class="flex justify-between items-start mb-4">
+                <div class="p-3 bg-secondary-container rounded-xl text-primary">
+                    <span class="material-symbols-outlined fill-icon">medical_information</span>
+                </div>
+                <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">{{ stats.doctors_active }} active</span>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-secondary">Doctors Present</p>
+                <p class="text-4xl font-extrabold headline-font text-on-surface mt-1">{{ stats.doctors_total }}</p>
+            </div>
+        </div>
+
+        <div class="bg-surface-container-lowest p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
+            <div class="flex justify-between items-start mb-4">
+                <div class="p-3 bg-secondary-container rounded-xl text-primary">
+                    <span class="material-symbols-outlined fill-icon">mark_email_unread</span>
+                </div>
+                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">PENDING</span>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-secondary">Provider Invitations</p>
+                <p class="text-4xl font-extrabold headline-font text-on-surface mt-1">{{ stats.pending_invitations }}</p>
+            </div>
+        </div>
+
+        <div class="bg-error-container/30 p-6 rounded-2xl flex flex-col justify-between min-h-[160px] border border-error/10">
+            <div class="flex justify-between items-start mb-4">
+                <div class="p-3 bg-error rounded-xl text-white">
+                    <span class="material-symbols-outlined fill-icon">shield_with_heart</span>
+                </div>
+                <span class="text-xs font-bold text-error bg-white/50 px-2 py-1 rounded">CRITICAL</span>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-on-error-container">Security Alerts</p>
+                <p class="text-4xl font-extrabold headline-font text-error mt-1">{{ stats.security_alerts }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <section class="xl:col-span-2 bg-surface-container-lowest rounded-3xl overflow-hidden p-8">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-on-surface headline-font tracking-tight">Recent Practitioner Invitations</h2>
+                    <p class="text-sm text-on-surface-variant mt-1">Liste recente des profils medecins visibles dans le systeme.</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                {% for doctor in recent_doctors %}
+                <div class="flex items-center justify-between p-4 rounded-2xl bg-surface-container-low/50 hover:bg-surface-container-low transition-colors">
+                    <div class="flex items-center space-x-4 min-w-0">
+                        <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black shrink-0">
+                            {{ doctor.first_name|default:"?"|slice:":1"|upper }}{{ doctor.last_name|default:"?"|slice:":1"|upper }}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-bold text-on-surface truncate">{{ doctor.full_name|default:"Medecin" }}</p>
+                            <p class="text-xs text-secondary truncate">{{ doctor.specialite|default:"Specialite non renseignee" }} • {{ doctor.created_at|date:"d M Y" }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <span class="px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest rounded-full {% if doctor.is_active %}bg-secondary-container text-primary{% else %}bg-error-container text-error{% endif %}">
+                            {% if doctor.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="rounded-2xl bg-surface-container-low/50 p-4 text-sm text-on-surface-variant">
+                    Aucun medecin recent disponible.
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="bg-surface-container-low rounded-3xl p-8">
+            <h2 class="text-2xl font-bold text-on-surface headline-font tracking-tight mb-6">Facility Status</h2>
+            {% if primary_facility %}
+            <div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="font-bold text-on-surface">{{ primary_facility.nom }}</span>
+                    <span class="w-2 h-2 rounded-full {% if primary_facility.actif %}bg-emerald-500{% else %}bg-error animate-pulse{% endif %}"></span>
+                </div>
+                <div class="w-full bg-surface-container-high h-2 rounded-full mb-3 overflow-hidden">
+                    <div class="{% if primary_facility.actif %}bg-primary{% else %}bg-error{% endif %} h-2 rounded-full" style="width: {% if primary_facility.actif %}42%{% else %}85%{% endif %}"></div>
+                </div>
+                <p class="text-xs text-secondary font-medium">
+                    {{ primary_facility.type_display_name }}
+                    {% if primary_facility.ville %} • {{ primary_facility.ville }}{% endif %}
+                </p>
+            </div>
+            {% else %}
+            <div class="bg-surface-container-lowest p-5 rounded-2xl shadow-sm text-sm text-on-surface-variant">
+                Aucun etablissement assigne a cet administrateur.
+            </div>
+            {% endif %}
+        </section>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <section class="bg-primary-container p-8 rounded-3xl text-white relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.4)_0%,transparent_50%)]"></div>
+            <h3 class="text-xl font-extrabold headline-font mb-4 relative z-10">Quick Actions</h3>
+            <div class="space-y-3 relative z-10">
+                <button class="w-full py-4 bg-white/10 hover:bg-white/20 transition-all rounded-2xl flex items-center px-6 gap-4 border border-white/10 backdrop-blur-md">
+                    <span class="material-symbols-outlined">person_add</span>
+                    <span class="font-bold text-sm uppercase tracking-widest">New Invitation</span>
+                </button>
+                <button class="w-full py-4 bg-white/10 hover:bg-white/20 transition-all rounded-2xl flex items-center px-6 gap-4 border border-white/10 backdrop-blur-md">
+                    <span class="material-symbols-outlined">analytics</span>
+                    <span class="font-bold text-sm uppercase tracking-widest">Generate Report</span>
+                </button>
+                <button class="w-full py-4 bg-white/10 hover:bg-white/20 transition-all rounded-2xl flex items-center px-6 gap-4 border border-white/10 backdrop-blur-md">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="font-bold text-sm uppercase tracking-widest">Manage Settings</span>
+                </button>
+            </div>
+        </section>
+
+        <section class="xl:col-span-2 bg-surface-container-lowest p-8 rounded-3xl shadow-sm border border-slate-100">
+            <div class="flex items-center gap-3 mb-6">
+                <span class="material-symbols-outlined text-primary">security</span>
+                <h3 class="font-bold text-on-surface text-lg">System Integrity</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="flex items-center justify-between rounded-2xl bg-surface-container-low px-4 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        <span class="text-sm font-medium text-secondary">HIPAA Protocol</span>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-600">ACTIVE</span>
+                </div>
+                <div class="flex items-center justify-between rounded-2xl bg-surface-container-low px-4 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        <span class="text-sm font-medium text-secondary">Encryption 256-bit</span>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-600">VERIFIED</span>
+                </div>
+                <div class="flex items-center justify-between rounded-2xl bg-surface-container-low px-4 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        <span class="text-sm font-medium text-secondary">IoT Firewall</span>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-600">SECURE</span>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

@@ -113,7 +113,7 @@
                                 <p class="text-xs text-on-surface-variant">Clique sur la carte ou déplace le marqueur pour mettre à jour la position.</p>
                             </div>
                         </div>
-                        <div class="facility-map border border-surface-container" data-facility-map data-interactive="true" data-latitude-input="id_latitude" data-longitude-input="id_longitude" data-address-input="id_adresse" data-city-input="id_ville" data-country-input="id_pays" data-postal-code-input="id_code"></div>
+                        <div class="facility-map border border-surface-container" data-facility-map data-interactive="true" data-latitude-input="id_latitude" data-longitude-input="id_longitude" data-address-input="id_adresse" data-city-input="id_ville" data-country-input="id_pays"></div>
                     </div>
                 </div>
             </section>
@@ -130,5 +130,6 @@
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="{% static 'js/facility_location_options.js' %}"></script>
+<script src="{% static 'js/facility_code_preview.js' %}"></script>
 <script src="{% static 'js/facility_map.js' %}"></script>
 {% endblock %}

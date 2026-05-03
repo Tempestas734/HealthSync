@@ -1,0 +1,146 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Horaire Medecin{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8 space-y-8">
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.3em] text-primary">Planning Hebdomadaire</p>
+            <h1 class="mt-2 text-4xl font-extrabold headline-font tracking-tight text-on-surface">{{ doctor_link.medecin.full_name|default:"Medecin" }}</h1>
+            <p class="mt-2 max-w-3xl text-sm text-on-surface-variant">
+                Definis les jours actifs et plusieurs intervalles d'ouverture, par exemple matin et soir, pour {{ etablissement.nom }}.
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <a class="inline-flex items-center rounded-xl bg-surface-container-low px-5 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'admin_etablissement_availability' %}">
+                <span class="material-symbols-outlined mr-2 text-base">arrow_back</span>
+                Retour
+            </a>
+            <a class="inline-flex items-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90" href="{% url 'admin_etablissement_doctor_leaves' doctor_link.medecin_id %}">
+                <span class="material-symbols-outlined mr-2 text-base">event_busy</span>
+                Conges
+            </a>
+        </div>
+    </div>
+
+    <form class="grid grid-cols-1 gap-8 2xl:grid-cols-[minmax(0,1.45fr)_380px]" method="post">
+        {% csrf_token %}
+        <section class="rounded-[32px] bg-surface-container-lowest shadow-sm">
+            <div class="flex items-center justify-between border-b border-surface-container px-6 py-5">
+                <div>
+                    <h2 class="text-2xl font-bold headline-font tracking-tight text-on-surface">Jours de travail</h2>
+                    <p class="mt-1 text-sm text-on-surface-variant">Chaque jour peut contenir jusqu'a 3 intervalles independants.</p>
+                </div>
+                <span class="rounded-full bg-primary-fixed/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">Matin / Apres-midi / Soir</span>
+            </div>
+
+            <div class="space-y-4 p-6">
+                {% for day in weekday_rows %}
+                <div class="rounded-[28px] border border-surface-container bg-surface p-5">
+                    <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                        <div class="flex min-w-0 flex-1 items-start gap-4">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-xs font-black text-slate-500 shadow-sm">{{ day.short }}</div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <h3 class="text-lg font-bold text-on-surface">{{ day.label }}</h3>
+                                    <label class="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-on-surface">
+                                        <input class="schedule-day-toggle h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary/20" data-day-code="{{ day.code }}" name="{{ day.code }}_enabled" type="checkbox" {% if day.is_active %}checked{% endif %}>
+                                        Active
+                                    </label>
+                                </div>
+
+                                <div class="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+                                    {% for interval in day.intervals %}
+                                    <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-surface-container">
+                                        <p class="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Creneau {{ interval.slot }}</p>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="mb-1 block text-xs font-semibold text-on-surface-variant">Check-in</label>
+                                                <input class="w-full rounded-xl border-0 bg-surface-container-low px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20" name="{{ day.code }}_start_{{ interval.slot }}" type="time" value="{{ interval.start }}">
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-xs font-semibold text-on-surface-variant">Check-out</label>
+                                                <input class="w-full rounded-xl border-0 bg-surface-container-low px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20" name="{{ day.code }}_end_{{ interval.slot }}" type="time" value="{{ interval.end }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full xl:w-[280px]">
+                            <label class="mb-2 block text-sm font-semibold text-on-surface" for="{{ day.code }}_notes">Note interne</label>
+                            <textarea class="min-h-[132px] w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20" id="{{ day.code }}_notes" name="{{ day.code }}_notes" placeholder="Ex: pause operatoire, consultation exterieure...">{{ day.notes }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <aside class="rounded-[32px] bg-surface-container-lowest shadow-sm">
+            <div class="border-b border-surface-container px-6 py-6">
+                <p class="text-xs font-bold uppercase tracking-[0.25em] text-primary">Resume</p>
+                <h2 class="mt-2 text-2xl font-extrabold headline-font tracking-tight text-on-surface">Configuration</h2>
+            </div>
+            <div class="space-y-5 p-6">
+                <div class="rounded-2xl bg-surface-container-low p-5">
+                    <p class="text-sm font-semibold text-on-surface">Bon usage</p>
+                    <ul class="mt-3 space-y-2 text-sm text-on-surface-variant">
+                        <li>Active seulement les jours travailles.</li>
+                        <li>Saisis un ou plusieurs intervalles complets.</li>
+                        <li>Laisse un creneau vide s'il n'est pas utilise.</li>
+                    </ul>
+                </div>
+                <div class="rounded-2xl bg-primary-container/10 p-5">
+                    <p class="text-sm font-semibold text-on-surface">Exemple</p>
+                    <p class="mt-2 text-sm text-on-surface-variant">Matin: `08:00 - 12:00` puis soir: `14:00 - 18:00`.</p>
+                </div>
+                <button class="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-primary to-primary-container px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-primary/20 transition hover:opacity-95" type="submit">
+                    <span class="material-symbols-outlined text-base">save</span>
+                    Enregistrer l'horaire
+                </button>
+            </div>
+        </aside>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const defaultIntervals = [
+            { start: "08:00", end: "12:00" },
+            { start: "14:00", end: "18:00" },
+        ];
+
+        function applyDefaults(dayCode) {
+            defaultIntervals.forEach((interval, index) => {
+                const slot = index + 1;
+                const startInput = document.querySelector(`input[name="${dayCode}_start_${slot}"]`);
+                const endInput = document.querySelector(`input[name="${dayCode}_end_${slot}"]`);
+                if (startInput && !startInput.value) {
+                    startInput.value = interval.start;
+                }
+                if (endInput && !endInput.value) {
+                    endInput.value = interval.end;
+                }
+            });
+        }
+
+        document.querySelectorAll(".schedule-day-toggle").forEach((checkbox) => {
+            const dayCode = checkbox.dataset.dayCode;
+            if (checkbox.checked) {
+                applyDefaults(dayCode);
+            }
+            checkbox.addEventListener("change", () => {
+                if (checkbox.checked) {
+                    applyDefaults(dayCode);
+                }
+            });
+        });
+    })();
+</script>
+{% endblock %}

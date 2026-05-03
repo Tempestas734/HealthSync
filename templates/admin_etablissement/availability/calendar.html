@@ -1,0 +1,117 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Calendrier Indisponibilites{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8 space-y-8">
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.3em] text-primary">Calendrier Dynamique</p>
+            <h1 class="mt-2 text-4xl font-extrabold headline-font tracking-tight text-on-surface">{{ doctor_link.medecin.full_name|default:"Medecin" }}</h1>
+            <p class="mt-2 max-w-3xl text-sm text-on-surface-variant">
+                Visualise les zones de dates ou ce medecin est indisponible pour {{ etablissement.nom }}.
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <a class="inline-flex items-center rounded-xl bg-surface-container-low px-5 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'admin_etablissement_availability' %}">
+                <span class="material-symbols-outlined mr-2 text-base">arrow_back</span>
+                Retour
+            </a>
+            <a class="inline-flex items-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90" href="{% url 'admin_etablissement_doctor_leaves' doctor_link.medecin_id %}">
+                <span class="material-symbols-outlined mr-2 text-base">event_busy</span>
+                Gerer les conges
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-8 2xl:grid-cols-[minmax(0,1.3fr)_420px]">
+        <section class="rounded-[32px] bg-surface-container-lowest p-6 shadow-sm">
+            <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold headline-font tracking-tight text-on-surface">{{ calendar_data.label }}</h2>
+                    <p class="mt-1 text-sm text-on-surface-variant">Les jours colores correspondent aux indisponibilites enregistrees.</p>
+                </div>
+                <form class="flex items-center gap-3" method="get">
+                    <a class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-low text-on-surface transition hover:bg-surface-container-high" href="?month={{ previous_month }}">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </a>
+                    <input class="rounded-xl border-0 bg-surface-container-low px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-primary/20" name="month" type="month" value="{{ selected_month }}">
+                    <button class="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:opacity-90" type="submit">Changer</button>
+                    <a class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-low text-on-surface transition hover:bg-surface-container-high" href="?month={{ next_month }}">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                </form>
+            </div>
+
+            <div class="mb-5 flex flex-wrap gap-3 text-xs font-bold uppercase tracking-wider">
+                <span class="rounded-full bg-red-100 px-3 py-1.5 text-red-700">Conge</span>
+                <span class="rounded-full bg-amber-100 px-3 py-1.5 text-amber-700">Absence</span>
+                <span class="rounded-full bg-blue-100 px-3 py-1.5 text-blue-700">Formation</span>
+                <span class="rounded-full bg-slate-200 px-3 py-1.5 text-slate-700">Indisponible</span>
+            </div>
+
+            <div class="grid grid-cols-7 gap-3">
+                {% for label in calendar_data.weekday_labels %}
+                <div class="px-2 py-2 text-center text-[11px] font-bold uppercase tracking-[0.25em] text-on-surface-variant">{{ label }}</div>
+                {% endfor %}
+
+                {% for week in calendar_data.weeks %}
+                    {% for day in week %}
+                    <div class="relative min-h-[112px] rounded-2xl border p-3 {% if day.is_current_month %}border-surface-container bg-white{% else %}border-transparent bg-surface-container-low text-on-surface-variant/60{% endif %} {% if day.is_blocked and day.tone == 'red' %}ring-2 ring-red-200 bg-red-50/60{% elif day.is_blocked and day.tone == 'amber' %}ring-2 ring-amber-200 bg-amber-50/70{% elif day.is_blocked and day.tone == 'blue' %}ring-2 ring-blue-200 bg-blue-50/70{% elif day.is_blocked and day.tone == 'slate' %}ring-2 ring-slate-200 bg-slate-100/80{% endif %}">
+                        <div class="flex items-start justify-between gap-2">
+                            <span class="text-sm font-bold {% if day.is_today %}text-primary{% else %}text-on-surface{% endif %}">{{ day.day_number }}</span>
+                            {% if day.entries %}
+                            <span class="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface">{{ day.entries|length }}</span>
+                            {% endif %}
+                        </div>
+                        {% if day.entries %}
+                        <div class="mt-3 space-y-2">
+                            {% for entry in day.entries|slice:":2" %}
+                            <div class="rounded-xl bg-white/90 px-2.5 py-2 text-[11px] shadow-sm">
+                                <p class="font-bold text-on-surface">{{ entry.type_display_name }}</p>
+                                <p class="mt-0.5 text-on-surface-variant">{{ entry.motif }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </section>
+
+        <aside class="rounded-[32px] bg-surface-container-lowest p-6 shadow-sm">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold headline-font tracking-tight text-on-surface">Indisponibilites du mois</h2>
+                <p class="mt-1 text-sm text-on-surface-variant">Resume detaille des periodes visibles dans le calendrier.</p>
+            </div>
+
+            <div class="space-y-4">
+                {% for entry in month_entries %}
+                <div class="rounded-2xl bg-surface-container-low px-5 py-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="font-bold text-on-surface">{{ entry.motif }}</p>
+                            <p class="mt-1 text-sm text-on-surface-variant">
+                                {{ entry.date_debut|date:"d/m/Y" }} - {{ entry.date_fin|date:"d/m/Y" }}
+                                {% if not entry.toute_la_journee and entry.heure_debut and entry.heure_fin %}
+                                - {{ entry.heure_debut|time:"H:i" }} a {{ entry.heure_fin|time:"H:i" }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <span class="inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">{{ entry.type_display_name }}</span>
+                    </div>
+                    {% if entry.notes %}
+                    <p class="mt-3 text-sm text-on-surface-variant">{{ entry.notes }}</p>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="rounded-2xl bg-surface-container-low px-5 py-6 text-sm text-on-surface-variant">
+                    Aucune indisponibilite enregistree sur ce mois.
+                </div>
+                {% endfor %}
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}

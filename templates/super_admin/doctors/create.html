@@ -79,11 +79,23 @@
                         {{ form.note }}
                         {% if form.note.errors %}<p class="mt-2 text-xs text-error">{{ form.note.errors.0 }}</p>{% endif %}
                     </label>
-                    <label class="block md:col-span-2">
+                    <div class="block md:col-span-2">
                         <span class="text-sm font-semibold text-on-surface">Langues</span>
-                        {{ form.langues_input }}
-                        {% if form.langues_input.help_text %}<p class="mt-2 text-xs text-on-surface-variant">{{ form.langues_input.help_text }}</p>{% endif %}
-                        {% if form.langues_input.errors %}<p class="mt-2 text-xs text-error">{{ form.langues_input.errors.0 }}</p>{% endif %}
+                        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            {% for checkbox in form.langues %}
+                            <label class="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3 text-sm font-medium text-on-surface">
+                                {{ checkbox.tag }}
+                                <span>{{ checkbox.choice_label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.langues.errors %}<p class="mt-2 text-xs text-error">{{ form.langues.errors.0 }}</p>{% endif %}
+                    </div>
+                    <label class="block md:col-span-2">
+                        <span class="text-sm font-semibold text-on-surface">Autres langues</span>
+                        {{ form.autres_langues }}
+                        {% if form.autres_langues.help_text %}<p class="mt-2 text-xs text-on-surface-variant">{{ form.autres_langues.help_text }}</p>{% endif %}
+                        {% if form.autres_langues.errors %}<p class="mt-2 text-xs text-error">{{ form.autres_langues.errors.0 }}</p>{% endif %}
                     </label>
                     <label class="block md:col-span-2">
                         <span class="text-sm font-semibold text-on-surface">Photo URL</span>

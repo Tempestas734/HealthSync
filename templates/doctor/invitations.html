@@ -1,0 +1,177 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Invitations Medecin{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div>
+            <h2 class="text-3xl font-extrabold text-on-surface tracking-tight mb-2">Invitations Envoyees</h2>
+            <p class="text-on-surface-variant">Manage and monitor professional access requests across your facility network.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/60">filter_list</span>
+                <input class="bg-surface-container-lowest border-none rounded-xl pl-11 pr-6 py-3 w-80 text-sm shadow-sm focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/50" placeholder="Filter by establishment or role" type="text">
+            </div>
+        </div>
+    </div>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div class="bg-surface-container-lowest p-6 rounded-xl transition-all hover:translate-y-[-2px]">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium text-on-surface-variant">Total Sent</span>
+                <div class="p-2 bg-primary/5 rounded-lg text-primary">
+                    <span class="material-symbols-outlined text-lg">mail</span>
+                </div>
+            </div>
+            <div class="text-3xl font-bold text-primary mb-1">{{ invitation_stats.total_sent }}</div>
+            <div class="text-xs text-secondary font-medium">Historique global des invitations</div>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-xl transition-all hover:translate-y-[-2px]">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium text-on-surface-variant">Pending</span>
+                <div class="p-2 bg-secondary-container/30 rounded-lg text-primary-container">
+                    <span class="material-symbols-outlined text-lg">pending</span>
+                </div>
+            </div>
+            <div class="text-3xl font-bold text-primary-container mb-1">{{ invitation_stats.pending }}</div>
+            <div class="text-xs text-secondary font-medium">Invitations en attente</div>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-xl transition-all hover:translate-y-[-2px]">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium text-on-surface-variant">Accepted</span>
+                <div class="p-2 bg-emerald-50 rounded-lg text-emerald-700">
+                    <span class="material-symbols-outlined text-lg">check_circle</span>
+                </div>
+            </div>
+            <div class="text-3xl font-bold text-emerald-700 mb-1">{{ invitation_stats.accepted }}</div>
+            <div class="text-xs text-secondary font-medium">Invitations acceptees</div>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-xl transition-all hover:translate-y-[-2px]">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium text-on-surface-variant">Expired</span>
+                <div class="p-2 bg-error-container/30 rounded-lg text-error">
+                    <span class="material-symbols-outlined text-lg">history_toggle_off</span>
+                </div>
+            </div>
+            <div class="text-3xl font-bold text-error mb-1">{{ invitation_stats.expired }}</div>
+            <div class="text-xs text-secondary font-medium">Invitations expirees</div>
+        </div>
+    </section>
+
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-surface-container-low">
+                    <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Etablissement</th>
+                    <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Role</th>
+                    <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Date Sent</th>
+                    <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Coordonnees</th>
+                    <th class="px-6 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-container">
+                {% for invitation in invitations %}
+                <tr class="hover:bg-surface-container-low/30 transition-colors">
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-full bg-secondary-container flex items-center justify-center text-primary font-bold">
+                                {{ invitation.etablissement.nom|slice:":2"|upper }}
+                            </div>
+                            <div>
+                                <p class="font-semibold text-on-surface">{{ invitation.etablissement.nom }}</p>
+                                <p class="text-xs text-on-surface-variant">
+                                    {{ invitation.etablissement.type_display_name }}
+                                    {% if invitation.etablissement.ville %} • {{ invitation.etablissement.ville }}{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-5 text-sm text-on-surface-variant">{{ invitation.role_display_name }}</td>
+                    <td class="px-6 py-5 text-sm text-on-surface-variant">{{ invitation.created_at|date:"d M Y" }}</td>
+                    <td class="px-6 py-5">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1
+                            {% if invitation.status == 'pending' %}bg-secondary-container text-primary-container
+                            {% elif invitation.status == 'accepted' %}bg-emerald-100 text-emerald-700
+                            {% elif invitation.status == 'expired' %}bg-error-container text-error
+                            {% elif invitation.status == 'rejected' or invitation.status == 'cancelled' %}bg-error-container text-error
+                            {% else %}bg-surface-container text-on-surface-variant{% endif %}">
+                            <span class="w-1.5 h-1.5 rounded-full
+                                {% if invitation.status == 'pending' %}bg-primary-container
+                                {% elif invitation.status == 'accepted' %}bg-emerald-600
+                                {% else %}bg-error{% endif %}"></span>
+                            {{ invitation.status_display_name }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-5 text-sm text-on-surface-variant">
+                        {% if invitation.etablissement.email %}
+                        {{ invitation.etablissement.email }}
+                        {% elif invitation.etablissement.telephone %}
+                        {{ invitation.etablissement.telephone }}
+                        {% else %}
+                        Non renseigne
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-5">
+                        {% if invitation.status == "pending" %}
+                        <form action="{% url 'doctor_invitation_decision' invitation.id %}" class="flex items-center justify-end gap-2" method="post">
+                            {% csrf_token %}
+                            <input class="bg-surface-container-lowest border-none rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 w-28" maxlength="20" minlength="4" name="pin_code" placeholder="Code PIN" required type="password">
+                            <button class="px-3 py-2 text-xs font-bold text-white bg-primary rounded-lg transition-all" name="action" type="submit" value="accept">
+                                Accepter
+                            </button>
+                            <button class="px-3 py-2 text-xs font-bold text-error bg-error/5 rounded-lg transition-all" name="action" type="submit" value="reject">
+                                Refuser
+                            </button>
+                        </form>
+                        {% else %}
+                        <div class="flex items-center justify-end">
+                            <button class="p-2 text-primary hover:bg-primary/5 rounded-lg transition-all" title="Voir" type="button">
+                                <span class="material-symbols-outlined text-lg">visibility</span>
+                            </button>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td class="px-6 py-8 text-sm text-on-surface-variant" colspan="6">Aucune invitation disponible.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="px-6 py-4 bg-surface-container-low flex items-center justify-between">
+            <span class="text-sm text-on-surface-variant">Showing {{ invitations|length }} invitation{{ invitations|length|pluralize }}</span>
+            <div class="flex gap-2">
+                <button class="px-4 py-2 text-sm font-bold text-on-surface-variant bg-surface-container-lowest rounded-lg hover:bg-white transition-all" type="button">Previous</button>
+                <button class="px-4 py-2 text-sm font-bold text-white bg-primary rounded-lg transition-all" type="button">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-primary/5 p-8 rounded-2xl border-l-4 border-primary">
+            <div class="flex items-start gap-4">
+                <span class="material-symbols-outlined text-primary text-3xl">info</span>
+                <div>
+                    <h4 class="text-lg font-bold text-primary mb-2">Securite des Invitations</h4>
+                    <p class="text-sm text-secondary leading-relaxed">
+                        Toutes les invitations envoyeess expirent automatiquement apres 14 jours si elles ne sont pas acceptees.
+                        Le code PIN reste protege et n'est pas affiche dans l'interface medicin.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="relative rounded-2xl overflow-hidden group bg-primary-container">
+            <div class="absolute inset-0 bg-primary/20 backdrop-blur-sm flex items-center justify-center">
+                <div class="text-center p-6">
+                    <h4 class="text-white font-bold text-xl mb-1">Aegis Network Analytics</h4>
+                    <p class="text-white/80 text-sm">Optimisez vos processus de liaison avec les etablissements.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

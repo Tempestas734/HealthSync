@@ -1,12 +1,179 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Doctor Dashboard</title>
-</head>
-<body>
-    <h2>Dashboard Médecin</h2>
-    <p>Bienvenue Dr. {{ request.user.last_name }}</p>
-    <p>Rôle : {{ request.user.role.display_name }}</p>
-    <a href="/logout/">Logout</a>
-</body>
-</html>
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Dashboard Medecin{% endblock %}
+
+{% block content %}
+<div class="p-10 max-w-7xl mx-auto">
+    <div class="mb-10 flex justify-between items-end gap-6 flex-wrap">
+        <div>
+            <h3 class="text-3xl font-extrabold headline-font tracking-tight text-on-background mb-2">Espace Praticien</h3>
+            <p class="text-secondary font-medium">Bon retour, Dr. {{ doctor_profile.last_name|default:"Doctor" }}. Voici l'etat de votre service aujourd'hui.</p>
+        </div>
+        <div class="bg-secondary-container text-on-secondary-container px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm fill-icon">calendar_month</span>
+            <span>{{ now|date:"l d F Y" }}</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="bg-surface-container-lowest p-6 rounded-xl transition-transform hover:scale-[1.02] duration-300">
+            <div class="w-10 h-10 rounded-full bg-primary-fixed/30 flex items-center justify-center text-primary mb-4">
+                <span class="material-symbols-outlined">apartment</span>
+            </div>
+            <p class="text-on-surface-variant text-xs font-bold uppercase tracking-wider mb-1">Linked Facilities</p>
+            <p class="text-2xl font-black headline-font text-on-background">{{ doctor_stats.facilities_total }}</p>
+            <div class="mt-4 flex items-center text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded w-max">
+                <span class="material-symbols-outlined text-xs">link</span> {{ doctor_stats.facilities_active }} actives
+            </div>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-xl transition-transform hover:scale-[1.02] duration-300">
+            <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 mb-4">
+                <span class="material-symbols-outlined">pending_actions</span>
+            </div>
+            <p class="text-on-surface-variant text-xs font-bold uppercase tracking-wider mb-1">Invitations</p>
+            <p class="text-2xl font-black headline-font text-on-background">{{ doctor_stats.pending_invitations }}</p>
+            <p class="mt-4 text-[10px] font-bold text-on-surface-variant">En attente actuellement</p>
+        </div>
+        <div class="bg-surface-container-lowest p-6 rounded-xl transition-transform hover:scale-[1.02] duration-300">
+            <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary mb-4">
+                <span class="material-symbols-outlined">verified</span>
+            </div>
+            <p class="text-on-surface-variant text-xs font-bold uppercase tracking-wider mb-1">Accepted Links</p>
+            <p class="text-2xl font-black headline-font text-on-background">{{ doctor_stats.accepted_invitations }}</p>
+            <p class="mt-4 text-[10px] font-bold text-on-surface-variant">Invitations acceptees</p>
+        </div>
+        <div class="bg-error-container p-6 rounded-xl transition-transform hover:scale-[1.02] duration-300">
+            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-error mb-4">
+                <span class="material-symbols-outlined fill-icon">priority_high</span>
+            </div>
+            <p class="text-on-error-container text-xs font-bold uppercase tracking-wider mb-1">Alertes</p>
+            <p class="text-2xl font-black headline-font text-on-error-container">{{ doctor_stats.expired_invitations }}</p>
+            <p class="mt-4 text-[10px] font-bold text-on-error-container/70">Invitations expirees</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="lg:col-span-8 space-y-6">
+            <div class="bg-surface-container-lowest p-8 rounded-2xl">
+                <div class="flex justify-between items-center mb-8">
+                    <h4 class="text-lg font-bold headline-font">Invitations Recues</h4>
+                    <button class="text-primary text-sm font-bold hover:underline" type="button">Voir tout</button>
+                </div>
+                <div class="space-y-4">
+                    {% for invitation in doctor_invitations %}
+                    <div class="flex items-center justify-between p-4 {% if invitation.status == 'accepted' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-surface-container-low{% endif %} rounded-xl transition-colors group {% if invitation.status == 'expired' %}opacity-60{% endif %}">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full {% if invitation.status == 'accepted' %}bg-white/20 ring-2 ring-white/30{% else %}bg-primary/10{% endif %} text-primary flex items-center justify-center font-black overflow-hidden">
+                                {% if invitation.status == 'accepted' %}<span class="text-white">{{ invitation.etablissement.nom|slice:":2"|upper }}</span>{% else %}{{ invitation.etablissement.nom|slice:":2"|upper }}{% endif %}
+                            </div>
+                            <div>
+                                <p class="font-bold {% if invitation.status == 'accepted' %}text-white{% else %}text-on-background{% endif %}">{{ invitation.etablissement.nom }}</p>
+                                <p class="text-xs {% if invitation.status == 'accepted' %}text-on-primary-container{% else %}text-secondary{% endif %}">
+                                    {{ invitation.role_display_name }}{% if invitation.created_at %} • {{ invitation.created_at|date:"d M Y H:i" }}{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <span class="px-3 py-1 text-[10px] font-bold uppercase rounded-full
+                                {% if invitation.status == 'accepted' %}bg-white/20 text-white
+                                {% elif invitation.status == 'pending' %}bg-amber-100 text-amber-700
+                                {% elif invitation.status == 'expired' %}bg-error-container text-error
+                                {% else %}bg-secondary-container text-on-secondary-container{% endif %}">
+                                {{ invitation.status_display_name }}
+                            </span>
+                            <button class="w-8 h-8 rounded-full bg-white flex items-center justify-center {% if invitation.status == 'accepted' %}text-primary{% else %}text-on-surface-variant{% endif %}" type="button">
+                                <span class="material-symbols-outlined text-lg">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-4 bg-surface-container-low rounded-xl text-sm text-on-surface-variant">
+                        Aucune invitation recue pour le moment.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-surface-container-lowest p-8 rounded-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h4 class="text-lg font-bold headline-font">Liaisons Etablissements</h4>
+                    <span class="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Reseau Actif
+                    </span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {% for link in doctor_facility_links %}
+                    <div class="p-4 bg-surface-container-low rounded-xl border border-transparent hover:border-primary/10 transition-all flex items-center gap-4">
+                        <div class="w-10 h-10 rounded bg-white flex items-center justify-center text-primary shadow-sm">
+                            <span class="material-symbols-outlined">{% if link.etablissement.type_etablissement == 'hopital' %}local_hospital{% else %}apartment{% endif %}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-on-background">{{ link.etablissement.nom }}</p>
+                            <p class="text-[10px] text-secondary font-medium uppercase">{{ link.role_display_name }}</p>
+                        </div>
+                        <span class="ml-auto material-symbols-outlined text-primary text-sm">link</span>
+                    </div>
+                    {% empty %}
+                    <div class="p-4 bg-surface-container-low rounded-xl text-sm text-on-surface-variant">
+                        Aucune liaison etablissement active.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-4 space-y-8">
+            <div class="bg-surface-container-lowest p-8 rounded-2xl">
+                <h4 class="text-lg font-bold headline-font mb-6">Actions Rapides</h4>
+                <div class="space-y-3">
+                    <button class="w-full p-4 flex items-center gap-4 bg-blue-50 text-primary rounded-xl font-bold text-sm hover:bg-blue-100 transition-colors group" type="button">
+                        <span class="material-symbols-outlined p-2 bg-white rounded-lg shadow-sm group-hover:scale-110 transition-transform">add_circle</span>
+                        <span>Nouvelle Consultation</span>
+                    </button>
+                    <button class="w-full p-4 flex items-center gap-4 bg-surface-container-low text-secondary rounded-xl font-bold text-sm hover:bg-surface-container transition-colors group" type="button">
+                        <span class="material-symbols-outlined p-2 bg-white rounded-lg shadow-sm group-hover:scale-110 transition-transform">edit_note</span>
+                        <span>Rediger Ordonnance</span>
+                    </button>
+                    <button class="w-full p-4 flex items-center gap-4 bg-surface-container-low text-secondary rounded-xl font-bold text-sm hover:bg-surface-container transition-colors group" type="button">
+                        <span class="material-symbols-outlined p-2 bg-white rounded-lg shadow-sm group-hover:scale-110 transition-transform">folder_shared</span>
+                        <span>Voir Dossier Medical</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-primary-container to-primary p-8 rounded-2xl text-white relative overflow-hidden group">
+                <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                <h4 class="text-lg font-bold headline-font mb-2">Securite Session</h4>
+                <div class="flex items-center gap-2 mb-6">
+                    <span class="material-symbols-outlined text-sm fill-icon">lock</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-on-primary-container">Chiffrement AES-256</span>
+                </div>
+                <p class="text-sm text-on-primary-container mb-6 leading-relaxed">
+                    Votre session est securisee. Les donnees de vos liaisons medicales sont synchronisees en temps reel.
+                </p>
+                <div class="h-1 w-full bg-white/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-white w-2/3"></div>
+                </div>
+                <p class="mt-2 text-[10px] font-medium text-white/60">Prochaine sauvegarde dans 12 min</p>
+            </div>
+
+            <div class="bg-surface-container-lowest p-8 rounded-2xl">
+                <h4 class="text-sm font-bold headline-font mb-4 text-on-surface-variant uppercase tracking-widest">Apercu Metrics</h4>
+                <div class="flex items-end gap-2 h-24 mb-4">
+                    <div class="flex-1 bg-secondary-container rounded-t-lg h-[40%]"></div>
+                    <div class="flex-1 bg-secondary-container rounded-t-lg h-[65%]"></div>
+                    <div class="flex-1 bg-primary rounded-t-lg h-[90%]"></div>
+                    <div class="flex-1 bg-secondary-container rounded-t-lg h-[55%]"></div>
+                    <div class="flex-1 bg-secondary-container rounded-t-lg h-[75%]"></div>
+                    <div class="flex-1 bg-secondary-container rounded-t-lg h-[45%]"></div>
+                    <div class="flex-1 bg-secondary-container rounded-t-lg h-[80%]"></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-xs font-bold text-secondary">Volume activite</p>
+                    <p class="text-xs font-bold text-primary">+8% ce mois</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

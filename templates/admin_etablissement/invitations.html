@@ -1,0 +1,163 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Invitations{% endblock %}
+
+{% block content %}
+<main class="pl-0 min-h-screen">
+    <div class="max-w-6xl mx-auto p-12 space-y-12">
+        <section class="flex justify-between items-end gap-6 flex-wrap">
+            <div class="space-y-2">
+                <h1 class="text-4xl font-extrabold headline-font tracking-tighter text-on-surface">Invitation de Praticiens</h1>
+                <p class="text-secondary max-w-md">Gerez l'acces des nouveaux medecins a votre etablissement via notre protocole d'invitation securise.</p>
+            </div>
+            <div class="flex items-center space-x-2 text-secondary font-medium text-sm bg-surface-container-low px-4 py-2 rounded-full">
+                <span class="material-symbols-outlined text-lg fill-icon">verified_user</span>
+                <span>Zone d'Administration Securisee</span>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-12 gap-8">
+            <div class="col-span-12 lg:col-span-8 bg-surface-container-lowest p-8 rounded-xl shadow-sm space-y-8">
+                <div class="flex items-center space-x-4 border-b border-surface-container pb-6">
+                    <div class="p-3 bg-secondary-container text-primary rounded-xl">
+                        <span class="material-symbols-outlined">person_add</span>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold headline-font">Details de l'invitation</h2>
+                        <p class="text-sm text-on-secondary-container">Veuillez renseigner les informations professionnelles du medecin.</p>
+                    </div>
+                </div>
+
+                <form class="space-y-6" method="post">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                    <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-secondary px-1" for="{{ form.doctor_name.id_for_label }}">Nom Complet</label>
+                            {{ form.doctor_name }}
+                            {% if form.doctor_name.errors %}<p class="text-xs text-error">{{ form.doctor_name.errors.0 }}</p>{% endif %}
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-secondary px-1" for="{{ form.role.id_for_label }}">Role</label>
+                            {{ form.role }}
+                            {% if form.role.errors %}<p class="text-xs text-error">{{ form.role.errors.0 }}</p>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-semibold text-secondary px-1" for="{{ form.medecin_email.id_for_label }}">Email Professionnel</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">mail</span>
+                            {{ form.medecin_email }}
+                        </div>
+                        {% if form.medecin_email.errors %}<p class="text-xs text-error">{{ form.medecin_email.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <label class="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-4">
+                            {{ form.can_issue_prescriptions }}
+                            <span class="text-sm font-medium text-on-surface">Peut emettre des prescriptions</span>
+                        </label>
+                        <label class="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-4">
+                            {{ form.can_sign_documents }}
+                            <span class="text-sm font-medium text-on-surface">Peut signer des documents</span>
+                        </label>
+                    </div>
+
+                    <div class="pt-4">
+                        <button class="w-full bg-primary text-white py-4 rounded-full font-bold uppercase tracking-widest text-sm hover:opacity-90 transition-opacity flex items-center justify-center space-x-3" type="submit">
+                            <span>Envoyer l'invitation par email</span>
+                            <span class="material-symbols-outlined">send</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-span-12 lg:col-span-4 space-y-6">
+                <div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden h-full">
+                    <div class="relative z-10 space-y-6">
+                        <div class="p-3 bg-tertiary-container text-on-tertiary-fixed-variant rounded-xl w-fit">
+                            <span class="material-symbols-outlined">key</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold headline-font">Generation de Code PIN</h3>
+                            <p class="text-sm text-secondary mt-2">Le code unique expire apres 24 heures.</p>
+                        </div>
+                        <div class="bg-surface-container-lowest p-6 rounded-xl flex items-center justify-between border border-primary/5">
+                            <span class="text-3xl font-mono font-bold tracking-widest text-primary">{{ generated_pin|default:"----" }}</span>
+                        </div>
+                        <p class="text-[10px] text-secondary text-center leading-relaxed">
+                            Le protocole de securite exige un deuxieme facteur pour la validation du compte praticien.
+                        </p>
+                    </div>
+                    <div class="absolute -bottom-8 -right-8 opacity-5 text-primary">
+                        <span class="material-symbols-outlined text-[120px]">security</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="space-y-6">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+                <div class="flex items-center space-x-3">
+                    <span class="material-symbols-outlined text-secondary">pending_actions</span>
+                    <h2 class="text-2xl font-bold headline-font tracking-tight">Invitations en attente</h2>
+                </div>
+                <span class="text-sm font-semibold text-primary px-4 py-1 bg-secondary-container rounded-full">{{ pending_invitations_count }} Praticiens</span>
+            </div>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-12 px-6 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                    <div class="col-span-4">Praticien</div>
+                    <div class="col-span-2">Role</div>
+                    <div class="col-span-2">Date d'envoi</div>
+                    <div class="col-span-2">PIN expire</div>
+                    <div class="col-span-2">Statut</div>
+                </div>
+
+                {% for invitation in invitations %}
+                <div class="grid grid-cols-12 items-center px-6 py-4 bg-surface-container-lowest rounded-xl hover:bg-white transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)] {% if invitation.status == 'expired' or invitation.status == 'cancelled' %}opacity-70{% endif %}">
+                    <div class="col-span-4 flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-primary font-bold">
+                            {{ invitation.doctor_display_name|slice:":1"|upper }}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-bold text-sm truncate">{{ invitation.doctor_display_name }}</p>
+                            <p class="text-xs text-secondary truncate">{{ invitation.medecin_email }}</p>
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="text-sm font-medium px-3 py-1 bg-surface-container rounded-full">{{ invitation.role_display_name }}</span>
+                    </div>
+                    <div class="col-span-2 text-sm text-secondary">{{ invitation.created_at|date:"d M Y, H:i" }}</div>
+                    <div class="col-span-2 text-sm text-secondary">
+                        {% if invitation.pin_expires_at %}{{ invitation.pin_expires_at|date:"d M Y, H:i" }}{% else %}-{% endif %}
+                    </div>
+                    <div class="col-span-2">
+                        <div class="flex items-center space-x-2 text-xs font-bold
+                            {% if invitation.status == 'pending' %}text-tertiary
+                            {% elif invitation.status == 'accepted' %}text-emerald-600
+                            {% elif invitation.status == 'rejected' or invitation.status == 'cancelled' %}text-error
+                            {% else %}text-slate-500{% endif %}">
+                            {% if invitation.status == 'expired' %}
+                            <span class="material-symbols-outlined text-sm">timer_off</span>
+                            {% else %}
+                            <span class="w-2 h-2 rounded-full {% if invitation.status == 'pending' %}bg-tertiary-container animate-pulse{% elif invitation.status == 'accepted' %}bg-emerald-500{% else %}bg-error{% endif %}"></span>
+                            {% endif %}
+                            <span>{{ invitation.status_display_name|upper }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="rounded-xl bg-surface-container-lowest px-6 py-8 text-sm text-on-surface-variant">
+                    Aucune invitation n'a encore ete envoyee pour cet etablissement.
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock %}

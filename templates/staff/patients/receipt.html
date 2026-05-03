@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Ticket {{ patient.patient_code }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @page {
+            size: 80mm auto;
+            margin: 0;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #000;
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .ticket {
+            width: 80mm;
+            padding: 2mm 3mm 4mm;
+            box-sizing: border-box;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .title {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .line {
+            border-top: 1px dashed #000;
+            margin: 6px 0;
+        }
+
+        .row {
+            margin: 3px 0;
+            word-break: break-word;
+        }
+
+        .label {
+            font-weight: 700;
+        }
+
+        .code-block {
+            margin-top: 6px;
+            padding: 6px 4px;
+            border: 1px solid #000;
+            text-align: center;
+        }
+
+        .qrcode-box {
+            margin-top: 8px;
+            padding: 6px 0 2px;
+            text-align: center;
+        }
+
+        .qrcode-box img,
+        .qrcode-box canvas {
+            margin: 0 auto;
+        }
+
+        .code-value {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .actions {
+            padding: 18px 12px 14px;
+            text-align: center;
+        }
+
+        button {
+            border: 0;
+            border-radius: 999px;
+            padding: 14px 28px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        @media print {
+            .actions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket">
+        <div class="center">
+            <div class="title">{{ staff_facility.nom }}</div>
+            <div>{{ staff_facility.type_display_name }}{% if staff_facility.ville %} - {{ staff_facility.ville }}{% endif %}</div>
+        </div>
+
+        <div class="line"></div>
+
+        <div class="row center"><span class="label">PATIENT:</span> {{ patient.full_name|default:"-" }} | {{ patient.gender|default:"-" }} </div>
+        <div class="row center"><span class="label">PHONE:</span> {{ patient.phone|default:"-" }}</div>
+
+        <div class="line"></div>
+
+        <div class="code-block center">
+            <span class="label">CODE</span>
+            <span class="code-value">{{ patient.patient_code }}</span>
+        </div>
+
+        <div class="qrcode-box">
+            <div id="patient-qrcode"></div>
+        </div>
+
+        <div class="line"></div>
+        <div class="center">KEEP THIS TICKET FOR FAST IDENTIFICATION</div>
+
+    </div>
+
+    <div class="actions">
+        <button onclick="window.print()" type="button">Imprimer</button>
+    </div>
+
+    <script>
+        (function () {
+            const target = document.getElementById("patient-qrcode");
+            if (!target || typeof QRCode === "undefined") {
+                return;
+            }
+
+            const payload = JSON.stringify({
+                patient_code: "{{ patient.patient_code|escapejs }}",
+                barcode_value: "{{ patient.barcode_value|escapejs }}",
+                patient_name: "{{ patient.full_name|escapejs }}",
+                date_of_birth: "{{ patient.date_of_birth|date:'Y-m-d'|default:''|escapejs }}",
+                facility: "{{ staff_facility.nom|escapejs }}"
+            });
+
+            new QRCode(target, {
+                text: payload,
+                width: 132,
+                height: 132,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            window.setTimeout(function () {
+                window.print();
+            }, 300);
+        }());
+    </script>
+</body>
+</html>

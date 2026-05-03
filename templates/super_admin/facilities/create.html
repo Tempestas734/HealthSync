@@ -31,7 +31,7 @@
                         {% if form.nom.errors %}<p class="mt-2 text-xs text-error">{{ form.nom.errors.0 }}</p>{% endif %}
                     </label>
                     <label class="block">
-                        <span class="text-sm font-semibold text-on-surface">Code postal</span>
+                        <span class="text-sm font-semibold text-on-surface">Code</span>
                         {{ form.code }}
                         {% if form.code.errors %}<p class="mt-2 text-xs text-error">{{ form.code.errors.0 }}</p>{% endif %}
                     </label>
@@ -113,7 +113,7 @@
                                 <p class="text-xs text-on-surface-variant">Clique sur la carte ou déplace le marqueur pour remplir latitude et longitude.</p>
                             </div>
                         </div>
-                        <div class="facility-map border border-surface-container" data-facility-map data-interactive="true" data-latitude-input="id_latitude" data-longitude-input="id_longitude" data-address-input="id_adresse" data-city-input="id_ville" data-country-input="id_pays" data-postal-code-input="id_code"></div>
+                        <div class="facility-map border border-surface-container" data-facility-map data-interactive="true" data-latitude-input="id_latitude" data-longitude-input="id_longitude" data-address-input="id_adresse" data-city-input="id_ville" data-country-input="id_pays"></div>
                     </div>
                 </div>
             </section>
@@ -130,5 +130,6 @@
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="{% static 'js/facility_location_options.js' %}"></script>
+<script src="{% static 'js/facility_code_preview.js' %}"></script>
 <script src="{% static 'js/facility_map.js' %}"></script>
 {% endblock %}

@@ -1,0 +1,161 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Staff Attendance{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <header class="mb-10 flex justify-between items-end gap-6 flex-wrap">
+        <div>
+            <nav class="flex gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+                <span>Personnel</span>
+                <span>/</span>
+                <span class="text-primary">Attendance Logs</span>
+            </nav>
+            <h1 class="text-4xl font-extrabold headline-font text-on-background tracking-tight">Staff Attendance</h1>
+            <p class="text-on-surface-variant mt-2">Manage physician presence and track facility operations precision.</p>
+        </div>
+        <div class="flex items-center gap-2 bg-secondary-container px-4 py-2 rounded-full text-primary font-semibold text-sm">
+            <span class="material-symbols-outlined text-lg fill-icon">lock</span>
+            <span>Secure Session: {% if staff_facility %}{{ staff_facility.nom }}{% else %}No Facility{% endif %}</span>
+        </div>
+    </header>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+        <div class="bg-gradient-to-r from-primary to-primary-container p-6 text-white flex justify-between items-center gap-4 flex-wrap">
+            <div>
+                <h2 class="text-xl font-bold headline-font">Attendance Table</h2>
+                <p class="text-xs text-blue-100/80 font-medium">Use check-in or check-out to stamp the current time automatically.</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] uppercase font-bold tracking-widest opacity-70">Current Time</p>
+                <p class="font-bold">{{ current_timestamp|date:"M d, Y h:i A" }}</p>
+            </div>
+        </div>
+        <form class="border-b border-surface-container-low bg-surface-container-low p-6" method="get">
+            <div class="relative max-w-md">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                <input class="w-full rounded-full border-none bg-surface-container-lowest py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20" name="q" placeholder="Search by doctor name, ID or specialty..." type="text" value="{{ search_query }}">
+            </div>
+        </form>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Physician</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Specialty</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Status</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Check-in</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Check-out</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for row in attendance_rows %}
+                    <tr class="hover:bg-surface-container-low/40 transition-colors">
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                                    {{ row.doctor_link.medecin.user.first_name|default:"D"|slice:":1"|upper }}{{ row.doctor_link.medecin.user.last_name|default:"R"|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-sm text-on-surface">{{ row.doctor_link.medecin.full_name|default:row.doctor_link.medecin.email }}</p>
+                                    <p class="text-[10px] uppercase tracking-wider text-on-surface-variant">ID: {{ row.doctor_link.medecin.id }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5 text-sm text-on-surface-variant">{{ row.doctor_link.medecin.specialite|default:"General Practice" }}</td>
+                        <td class="px-6 py-5">
+                            {% with status=row.presence.status|default:"expected" %}
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                                {% if status == 'present' %}bg-green-100 text-green-700
+                                {% elif status == 'absent' %}bg-red-100 text-red-700
+                                {% elif status == 'delayed' %}bg-amber-100 text-amber-700
+                                {% elif status == 'replaced' %}bg-purple-100 text-purple-700
+                                {% else %}bg-slate-100 text-slate-500{% endif %}">
+                                {% if row.presence %}{{ row.presence.status_display_name }}{% else %}Expected{% endif %}
+                            </span>
+                            {% endwith %}
+                        </td>
+                        <td class="px-6 py-5 text-sm font-semibold text-on-surface">{% if row.presence and row.presence.check_in_time %}{{ row.presence.check_in_time|date:"h:i A" }}{% else %}-{% endif %}</td>
+                        <td class="px-6 py-5 text-sm font-semibold text-on-surface">{% if row.presence and row.presence.check_out_time %}{{ row.presence.check_out_time|date:"h:i A" }}{% else %}-{% endif %}</td>
+                        <td class="px-6 py-5">
+                            <div class="flex items-center justify-end">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input name="medecin_id" type="hidden" value="{{ row.doctor_link.medecin_id }}">
+                                    <button class="{% if row.is_checked_in %}rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container{% else %}rounded-full bg-green-50 px-4 py-2 text-xs font-bold text-green-700 hover:bg-green-100{% endif %} transition-colors" name="action" type="submit" value="{{ row.next_action }}">
+                                        {% if row.is_checked_in %}Check-out{% else %}Check-in{% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="px-6 py-8 text-sm text-on-surface-variant" colspan="6">{% if search_query %}No physician matches this search.{% else %}No physician linked to this facility.{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <section class="mt-12">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold headline-font text-on-background">Recent Presence Logs</h3>
+            <button class="text-sm font-bold text-primary flex items-center gap-1 hover:underline" type="button">
+                <span>View Full History</span>
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Doctor Name</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Check-in/Out</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Duration</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Declared By</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant text-right">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for log in recent_logs %}
+                    <tr class="hover:bg-surface-container-low/40 transition-colors">
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-primary-fixed/40 flex items-center justify-center text-primary font-bold text-xs">
+                                    {{ log.medecin.user.first_name|default:"D"|slice:":1"|upper }}{{ log.medecin.user.last_name|default:"R"|slice:":1"|upper }}
+                                </div>
+                                <span class="font-bold text-sm">{{ log.medecin.full_name|default:log.medecin.email }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-semibold">{% if log.check_in_time %}{{ log.check_in_time|date:"h:i A" }}{% else %}-{% endif %}</span>
+                                <span class="text-[10px] text-on-surface-variant">{% if log.check_out_time %}{{ log.check_out_time|date:"h:i A" }}{% else %}Not Check-out{% endif %}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5">
+                            <span class="text-sm font-semibold text-on-surface">
+                                {% if log.duration_display %}{{ log.duration_display }}{% else %}-{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-5">
+                            <span class="text-sm text-on-surface-variant">
+                                {% if log.declared_by_user %}{{ log.declared_by_user.first_name }} {{ log.declared_by_user.last_name }}{% else %}System{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-5 text-right font-medium text-on-surface-variant text-sm">{{ log.presence_date|date:"M d, Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="px-6 py-8 text-sm text-on-surface-variant" colspan="5">No recent presence logs for this facility.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

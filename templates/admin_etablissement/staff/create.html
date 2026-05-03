@@ -7,7 +7,9 @@
     <div class="max-w-4xl bg-surface-container-lowest rounded-2xl p-8 shadow-sm">
         <div class="mb-8">
             <h3 class="text-xl font-bold text-on-surface">{{ page_heading }}</h3>
-            <p class="text-sm text-on-surface-variant mt-1">Update the user profile and role assignment.</p>
+            <p class="text-sm text-on-surface-variant mt-1">
+                Create a secretary or infirmier account for {{ etablissement.nom }}.
+            </p>
         </div>
 
         <form class="grid grid-cols-1 md:grid-cols-2 gap-6" method="post">
@@ -17,13 +19,6 @@
                 {{ form.non_field_errors }}
             </div>
             {% endif %}
-            <div class="md:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
-                <p class="font-semibold">Attention sur la synchronisation Auth</p>
-                <p class="mt-1">
-                    Si Supabase Auth retourne encore une erreur serveur pendant la modification, le profil local sera mis a jour
-                    mais l'email de connexion restera inchange.
-                </p>
-            </div>
 
             <label class="block">
                 <span class="text-sm font-semibold text-on-surface">First name</span>
@@ -38,7 +33,6 @@
             <label class="block md:col-span-2">
                 <span class="text-sm font-semibold text-on-surface">Email</span>
                 {{ form.email }}
-                <p class="mt-2 text-xs text-on-surface-variant">Le changement de cet email depend aussi de Supabase Auth.</p>
                 {% if form.email.errors %}<p class="mt-2 text-xs text-error">{{ form.email.errors.0 }}</p>{% endif %}
             </label>
             <label class="block">
@@ -52,6 +46,13 @@
                 {% if form.role.errors %}<p class="mt-2 text-xs text-error">{{ form.role.errors.0 }}</p>{% endif %}
             </label>
 
+            <label class="block md:col-span-2">
+                <span class="text-sm font-semibold text-on-surface">Temporary password</span>
+                {{ form.password }}
+                {% if form.password.help_text %}<p class="mt-2 text-xs text-on-surface-variant">{{ form.password.help_text }}</p>{% endif %}
+                {% if form.password.errors %}<p class="mt-2 text-xs text-error">{{ form.password.errors.0 }}</p>{% endif %}
+            </label>
+
             <div class="md:col-span-2 flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-4">
                 {{ form.is_active }}
                 <div>
@@ -61,7 +62,7 @@
             </div>
 
             <div class="md:col-span-2 flex items-center justify-end gap-3 pt-2">
-                <a class="px-4 py-2 rounded-xl bg-surface-container-high text-on-surface font-semibold text-sm" href="{% url 'super_admin_user_detail' user_obj.id %}">
+                <a class="px-4 py-2 rounded-xl bg-surface-container-high text-on-surface font-semibold text-sm" href="{% url 'admin_etablissement_staff_list' %}">
                     Cancel
                 </a>
                 <button class="px-5 py-2 rounded-xl bg-primary text-on-primary font-semibold text-sm shadow-lg shadow-primary/10" type="submit">

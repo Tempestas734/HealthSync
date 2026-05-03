@@ -7,6 +7,7 @@
     <title>{% block title %}HealthSync{% endblock %}</title>
     <script src="{% static 'js/super_admin_tailwind.js' %}"></script>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="{% static 'js/asset_diagnostics.js' %}"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link href="{% static 'css/super_admin.css' %}" rel="stylesheet">
@@ -14,22 +15,20 @@
 </head>
 <body class="{% block body_class %}bg-surface text-on-surface min-h-screen{% endblock %}">
     {% with user_role=request.session.role %}
-        {% if user_role == "super_admin" %}
+        {% if user_role == "super_admin" or user_role == "admin_etablissement" or user_role == "doctor" or user_role == "medecin" or user_role == "secretary" or user_role == "secretaire" or user_role == "infirmier" %}
         <div class="flex min-h-screen">
             {% include "base/navbar.html" with user_role=user_role %}
-            <main class="flex-1 flex flex-col min-w-0 lg:ml-64">
+            <main class="flex-1 flex flex-col min-w-0 {% if user_role == 'secretary' or user_role == 'secretaire' or user_role == 'infirmier' %}lg:ml-72{% else %}lg:ml-64{% endif %}">
         {% else %}
         {% include "base/navbar.html" with user_role=user_role %}
         <main class="min-h-screen flex flex-col">
         {% endif %}
-            {% if user_role == "super_admin" %}
             <header class="min-h-16 bg-surface sticky top-0 z-20 border-b border-surface-container/60">
                 {% block header_content %}{% include "base/header.html" %}{% endblock %}
             </header>
-            {% endif %}
-            <div class="flex-1">
+            <div class="flex-1 pt-4 lg:pt-6">
                 {% if messages %}
-                <div class="px-8 pt-6 space-y-3">
+                <div class="px-8 pb-2 space-y-3">
                     {% for message in messages %}
                     <div class="rounded-xl border px-4 py-3 text-sm {% if message.tags == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-800{% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800{% else %}border-surface-container bg-surface-container-low text-on-surface{% endif %}">
                         {{ message }}
@@ -41,7 +40,7 @@
             </div>
             {% include "base/footer.html" with user_role=user_role %}
         </main>
-        {% if user_role == "super_admin" %}
+        {% if user_role == "super_admin" or user_role == "admin_etablissement" or user_role == "doctor" or user_role == "medecin" or user_role == "secretary" or user_role == "secretaire" or user_role == "infirmier" %}
         </div>
         {% endif %}
     {% endwith %}

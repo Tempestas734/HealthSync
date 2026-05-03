@@ -5,8 +5,11 @@
 </head>
 <body>
     <h2>Dashboard</h2>
-    <p>Bienvenue {{ request.user.first_name }} {{ request.user.last_name }}</p>
-    <p>Rôle : {{ request.user.role.display_name }}</p>
-    <a href="/logout/">Logout</a>
+    <p>Bienvenue</p>
+    <p>Role : {{ request.session.role|default:"inconnu" }}</p>
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
 </body>
 </html>

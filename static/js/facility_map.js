@@ -24,20 +24,33 @@
         const addressInput = document.getElementById(container.dataset.addressInput);
         const cityInput = document.getElementById(container.dataset.cityInput);
         const countryInput = document.getElementById(container.dataset.countryInput);
-        const postalCodeInput = document.getElementById(container.dataset.postalCodeInput);
-        if (!latitudeInput || !longitudeInput || typeof L === "undefined") {
+        const postalCodeInput = container.dataset.postalCodeInput
+            ? document.getElementById(container.dataset.postalCodeInput)
+            : null;
+        if (!latitudeInput || !longitudeInput) {
             return;
         }
 
-        const initialLat = parseNumber(latitudeInput.value) ?? parseNumber(container.dataset.initialLat) ?? 33.5731;
-        const initialLng = parseNumber(longitudeInput.value) ?? parseNumber(container.dataset.initialLng) ?? -7.5898;
+        if (typeof L === "undefined") {
+            const warning = document.createElement("div");
+            warning.className = "mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800";
+            warning.textContent = "Leaflet n'a pas charge. Verifie la connexion a unpkg.com ou charge Leaflet en local.";
+            container.replaceChildren(warning);
+            return;
+        }
+
+        const savedLat = parseNumber(latitudeInput.value) ?? parseNumber(container.dataset.initialLat);
+        const savedLng = parseNumber(longitudeInput.value) ?? parseNumber(container.dataset.initialLng);
+        const hasInitialCoordinates = savedLat !== null && savedLng !== null;
+        const initialLat = savedLat ?? 33.5731;
+        const initialLng = savedLng ?? -7.5898;
         const interactive = container.dataset.interactive === "true";
 
         const map = L.map(container, {
             scrollWheelZoom: interactive,
             dragging: true,
             tap: interactive,
-        }).setView([initialLat, initialLng], parseNumber(latitudeInput.value) !== null && parseNumber(longitudeInput.value) !== null ? 13 : 5);
+        }).setView([initialLat, initialLng], hasInitialCoordinates ? 13 : 5);
 
         const tileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
             attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
@@ -58,9 +71,25 @@
             container.insertAdjacentElement("afterend", warning);
         });
 
-        const marker = L.marker([initialLat, initialLng], {
-            draggable: interactive,
-        }).addTo(map);
+        let marker = null;
+
+        function ensureMarker(latlng) {
+            if (!marker) {
+                marker = L.marker([latlng.lat, latlng.lng], {
+                    draggable: interactive,
+                }).addTo(map);
+
+                if (interactive) {
+                    marker.on("dragend", function () {
+                        moveMarker(marker.getLatLng());
+                    });
+                }
+                return marker;
+            }
+
+            marker.setLatLng(latlng);
+            return marker;
+        }
 
         function syncInputs(latlng) {
             latitudeInput.value = latlng.lat.toFixed(6);
@@ -68,7 +97,7 @@
         }
 
         function moveMarker(latlng) {
-            marker.setLatLng(latlng);
+            ensureMarker(latlng);
             map.panTo(latlng);
             syncInputs(latlng);
         }
@@ -76,9 +105,9 @@
         function buildAddressQuery() {
             const parts = [
                 addressInput ? addressInput.value.trim() : "",
-                postalCodeInput ? postalCodeInput.value.trim() : "",
                 cityInput ? cityInput.value.trim() : "",
                 countryInput ? countryInput.value.trim() : "",
+                postalCodeInput ? postalCodeInput.value.trim() : "",
             ].filter(Boolean);
 
             if (parts.length < 2) {
@@ -133,13 +162,13 @@
 
         const debouncedGeocode = debounce(geocodeAddress, 700);
 
+        if (hasInitialCoordinates) {
+            ensureMarker({ lat: initialLat, lng: initialLng });
+        }
+
         if (interactive) {
             map.on("click", function (event) {
                 moveMarker(event.latlng);
-            });
-
-            marker.on("dragend", function () {
-                moveMarker(marker.getLatLng());
             });
 
             [latitudeInput, longitudeInput].forEach(function (input) {
@@ -160,9 +189,11 @@
                 input.addEventListener("input", debouncedGeocode);
                 input.addEventListener("change", geocodeAddress);
             });
-
-            syncInputs(marker.getLatLng());
         }
+
+        setTimeout(function () {
+            map.invalidateSize();
+        }, 0);
     }
 
     document.addEventListener("DOMContentLoaded", function () {

@@ -1,30 +1,98 @@
-<div class="bg-surface h-16 px-8 flex justify-between items-center w-full z-10">
-    <div class="flex items-center gap-8">
-        <h1 class="text-xl font-bold text-on-surface tracking-tight headline-font">HealthSync</h1>
-        <div class="relative w-96 hidden lg:block">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
-            <input class="w-full bg-surface-container-low border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search facilities or providers..." type="text">
+{% with user_role=request.session.role %}
+    {% if user_role == "super_admin" or user_role == "admin_etablissement" %}
+    <div class="bg-surface h-16 px-8 flex justify-between items-center w-full z-10">
+        <div class="flex items-center gap-8">
+            <h1 class="text-xl font-bold text-on-surface tracking-tight headline-font">HealthSync</h1>
+            <div class="relative w-96 hidden lg:block">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                <input class="w-full bg-surface-container-low border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search facilities or providers..." type="text">
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-1">
+                <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all duration-200 scale-95 active:scale-100" type="button">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+                <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all duration-200 scale-95 active:scale-100" type="button">
+                    <span class="material-symbols-outlined">help</span>
+                </button>
+                <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all duration-200 scale-95 active:scale-100" type="button">
+                    <span class="material-symbols-outlined">settings</span>
+                </button>
+            </div>
+            <div class="h-8 w-px bg-outline-variant/20 mx-2"></div>
+            <div class="flex items-center gap-3">
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs font-bold headline-font leading-none">
+                        {% if user_role == "admin_etablissement" %}Admin Etablissement{% else %}Super Admin{% endif %}
+                    </p>
+                    <p class="text-[10px] text-on-surface-variant mt-0.5">
+                        {% if user_role == "admin_etablissement" %}Facility Profile{% else %}Admin Profile{% endif %}
+                    </p>
+                </div>
+                <img alt="{% if user_role == 'admin_etablissement' %}Admin Etablissement Profile{% else %}Super Admin Profile{% endif %}" class="h-9 w-9 rounded-full object-cover ring-2 ring-primary-fixed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxXKffn1xbhPwPJfpzPbqI-xpd9AZeJVdSTQO0eUUZGJe4nBcoBce_dTJNQa3WOWl6C241GhMtUxBK_oe4YNUpI8b10pHyr-L9ewJXuLhDEAGlTMI1Qry3GZcy8verLfdIAkKG2zFQORqJnVHKEGPmJBWmkSrDLMGAXxsqJdbSdukriY7Tpt9ADWNtEdf3PsR_VZYMtNb5TzJrZKdbFWpy2ZYIn93hZ20TA2rTCwot9zUz3LjkkyjQkVYqS4jllg1EgCYkduod">
+            </div>
         </div>
     </div>
-    <div class="flex items-center gap-4">
-        <div class="flex items-center gap-1">
-            <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all duration-200 scale-95 active:scale-100" type="button">
+    {% elif user_role == "doctor" or user_role == "medecin" %}
+    <div class="bg-surface h-16 px-8 flex justify-between items-center w-full z-10">
+        <div class="flex items-center gap-8 flex-1">
+            <h1 class="text-xl font-bold text-on-surface tracking-tight headline-font">Aegis Health</h1>
+            <div class="relative w-full max-w-md hidden lg:block">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                <input class="w-full bg-surface-container-highest border-none rounded-full pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Rechercher un patient ou un dossier..." type="text">
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors relative" type="button">
                 <span class="material-symbols-outlined">notifications</span>
+                <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
             </button>
-            <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all duration-200 scale-95 active:scale-100" type="button">
-                <span class="material-symbols-outlined">help</span>
-            </button>
-            <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all duration-200 scale-95 active:scale-100" type="button">
+            <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors" type="button">
                 <span class="material-symbols-outlined">settings</span>
             </button>
-        </div>
-        <div class="h-8 w-px bg-outline-variant/20 mx-2"></div>
-        <div class="flex items-center gap-3">
-            <div class="text-right hidden sm:block">
-                <p class="text-xs font-bold headline-font leading-none">Super Admin</p>
-                <p class="text-[10px] text-on-surface-variant mt-0.5">Admin Profile</p>
+            <div class="flex items-center gap-3 ml-2 pl-6 border-l border-surface-container">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-on-surface">{{ doctor_profile.first_name|default:"Dr." }} {{ doctor_profile.last_name|default:"Doctor" }}</p>
+                    <p class="text-[10px] text-on-surface-variant font-semibold uppercase">{{ doctor_profile.user.role_display_name|default:"Medecin" }}</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black">
+                    {{ doctor_profile.first_name|default:"D"|slice:":1"|upper }}{{ doctor_profile.last_name|default:"R"|slice:":1"|upper }}
+                </div>
             </div>
-            <img alt="Super Admin Profile" class="h-9 w-9 rounded-full object-cover ring-2 ring-primary-fixed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxXKffn1xbhPwPJfpzPbqI-xpd9AZeJVdSTQO0eUUZGJe4nBcoBce_dTJNQa3WOWl6C241GhMtUxBK_oe4YNUpI8b10pHyr-L9ewJXuLhDEAGlTMI1Qry3GZcy8verLfdIAkKG2zFQORqJnVHKEGPmJBWmkSrDLMGAXxsqJdbSdukriY7Tpt9ADWNtEdf3PsR_VZYMtNb5TzJrZKdbFWpy2ZYIn93hZ20TA2rTCwot9zUz3LjkkyjQkVYqS4jllg1EgCYkduod">
         </div>
     </div>
-</div>
+    {% elif user_role == "secretary" or user_role == "secretaire" or user_role == "infirmier" %}
+    <div class="bg-surface h-16 px-8 flex justify-between items-center w-full z-10">
+        <div class="flex items-center gap-8">
+            <h1 class="text-xl font-bold text-on-surface tracking-tight headline-font">Aegis Health</h1>
+            <div class="relative w-80 hidden lg:block">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                <input class="w-full bg-surface-container-highest border-none rounded-full pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search patients or doctors..." type="text">
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors" type="button">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors" type="button">
+                <span class="material-symbols-outlined">help_outline</span>
+            </button>
+            <div class="h-8 w-px bg-outline-variant/20 mx-2"></div>
+            <div class="flex items-center gap-3">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold leading-none text-on-surface">
+                        {{ staff_profile.first_name|default:"Front Desk" }} {{ staff_profile.last_name|default:"Admin" }}
+                    </p>
+                    <p class="text-[10px] text-on-surface-variant font-semibold uppercase tracking-wider mt-1">
+                        {{ staff_profile.role_display_name|default:"Personnel" }}
+                    </p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black">
+                    {{ staff_profile.first_name|default:"F"|slice:":1"|upper }}{{ staff_profile.last_name|default:"D"|slice:":1"|upper }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endwith %}

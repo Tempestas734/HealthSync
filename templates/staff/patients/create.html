@@ -1,0 +1,258 @@
+{% extends "base/base.html" %}
+
+{% block title %}Ajouter un patient | HealthSync{% endblock %}
+
+{% block content %}
+<main class="mx-auto w-full max-w-6xl px-8 pb-12">
+    <div class="mb-10">
+        <div class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <span>Patients</span>
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+            <span class="text-primary">Nouveau Patient</span>
+        </div>
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <h2 class="mb-3 text-4xl font-extrabold leading-none tracking-tight text-slate-900">Ajouter un nouveau patient</h2>
+                <p class="max-w-xl font-medium text-slate-500">
+                    Veuillez remplir les informations requises pour creer un nouveau dossier patient pour {{ staff_facility.nom }}.
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-secondary text-xl">verified_user</span>
+                <span class="text-xs font-bold uppercase tracking-tighter text-secondary">Session securisee</span>
+            </div>
+        </div>
+    </div>
+
+    {% if last_created_patient %}
+    <section class="mb-8 rounded-[2rem] border border-emerald-200 bg-emerald-50 p-6 shadow-sm transition-opacity duration-500" id="print-panel">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">Patient cree</p>
+                <h3 class="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">{{ last_created_patient.full_name }}</h3>
+                <p class="mt-2 text-sm text-slate-600">
+                    Code patient: <span class="font-mono font-bold">{{ last_created_patient.patient_code }}</span>
+                    <span class="mx-2">•</span>
+                    Barcode: <span class="font-mono font-bold">{{ last_created_patient.barcode_value }}</span>
+                </p>
+                <p class="mt-3 text-sm font-medium text-slate-500" id="print-status"></p>
+            </div>
+            <div class="flex flex-col gap-3 sm:min-w-[220px]">
+                <button class="mt-2 inline-flex items-center justify-center gap-3 rounded-full bg-primary px-8 py-4 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]" data-url="{% url 'staff_patient_receipt' last_created_patient.id %}" id="print-receipt-link" type="button">
+                    <span class="material-symbols-outlined">print</span>
+                    <span>Print Receipt</span>
+                </button>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <form class="grid grid-cols-12 gap-8" method="post">
+        {% csrf_token %}
+        <section class="col-span-12 flex flex-col gap-8 rounded-[2rem] bg-surface-container-lowest p-8 shadow-sm lg:col-span-8">
+            <div class="flex items-center gap-4">
+                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-primary">
+                    <span class="material-symbols-outlined fill-icon">person_add</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold tracking-tight text-slate-900">Informations Personnelles</h3>
+                    <p class="text-sm text-slate-500">Saisir les donnees d'identite du patient.</p>
+                </div>
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div class="space-y-2">
+                    <label class="ml-1 text-xs font-bold uppercase tracking-wider text-slate-500" for="{{ form.last_name.id_for_label }}">Nom</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}<p class="text-sm text-red-700">{{ form.last_name.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="space-y-2">
+                    <label class="ml-1 text-xs font-bold uppercase tracking-wider text-slate-500" for="{{ form.first_name.id_for_label }}">Prenom</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}<p class="text-sm text-red-700">{{ form.first_name.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="space-y-2">
+                    <label class="ml-1 text-xs font-bold uppercase tracking-wider text-slate-500" for="{{ form.date_of_birth.id_for_label }}">Date de naissance</label>
+                    <div class="relative">
+                        {{ form.date_of_birth }}
+                        <span class="material-symbols-outlined pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">calendar_month</span>
+                    </div>
+                    {% if form.date_of_birth.errors %}<p class="text-sm text-red-700">{{ form.date_of_birth.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="space-y-2">
+                    <label class="ml-1 text-xs font-bold uppercase tracking-wider text-slate-500" for="{{ form.gender.id_for_label }}">Sexe</label>
+                    {{ form.gender }}
+                    {% if form.gender.errors %}<p class="text-sm text-red-700">{{ form.gender.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="relative col-span-12 flex flex-col gap-6 overflow-hidden rounded-[2rem] bg-primary-container p-8 text-white shadow-lg lg:col-span-4">
+            <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-3xl"></div>
+            <div class="relative z-10">
+                <div class="mb-6 flex items-center gap-4">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20">
+                        <span class="material-symbols-outlined fill-icon">vital_signs</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold tracking-tight">Donnees Cliniques</h3>
+                        <p class="text-sm text-white/70">Code, barcode et informations d'urgence</p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+                        <p class="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/60">Code patient</p>
+                        <p class="font-mono text-lg font-bold tracking-wider">{{ patient_code_preview }}</p>
+                        <p class="mt-2 text-xs text-white/70">Le code final et le barcode sont generes automatiquement a l'enregistrement.</p>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="ml-1 text-[10px] font-bold uppercase tracking-widest text-white/60" for="{{ form.blood_group.id_for_label }}">Groupe sanguin</label>
+                        {{ form.blood_group }}
+                        {% if form.blood_group.errors %}<p class="text-sm text-red-100">{{ form.blood_group.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+                        <div class="mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">emergency</span>
+                            <span class="text-xs font-bold uppercase tracking-widest">Contact d'urgence</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                {{ form.emergency_contact_name }}
+                                {% if form.emergency_contact_name.errors %}<p class="mt-1 text-sm text-red-100">{{ form.emergency_contact_name.errors.0 }}</p>{% endif %}
+                            </div>
+                            <div>
+                                {{ form.emergency_contact_phone }}
+                                {% if form.emergency_contact_phone.errors %}<p class="mt-1 text-sm text-red-100">{{ form.emergency_contact_phone.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="col-span-12 grid grid-cols-1 gap-8 rounded-[2rem] bg-surface-container-low p-8 lg:grid-cols-2">
+            <div class="space-y-6">
+                <div class="flex items-center gap-4">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-secondary">
+                        <span class="material-symbols-outlined">contact_phone</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Coordonnees</h3>
+                </div>
+                <div class="space-y-2">
+                    <label class="ml-1 text-xs font-bold uppercase tracking-wider text-slate-500" for="{{ form.phone.id_for_label }}">Telephone</label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}<p class="text-sm text-red-700">{{ form.phone.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="space-y-2">
+                    <label class="ml-1 text-xs font-bold uppercase tracking-wider text-slate-500" for="{{ form.email.id_for_label }}">E-mail</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}<p class="text-sm text-red-700">{{ form.email.errors.0 }}</p>{% endif %}
+                </div>
+                <label class="flex items-center gap-3 rounded-xl bg-white px-4 py-4 text-sm font-medium text-slate-700">
+                    {{ form.is_active }}
+                    <span>Patient actif</span>
+                </label>
+            </div>
+
+            <div class="space-y-6 lg:border-l lg:border-slate-200 lg:pl-8">
+                <div class="flex items-center gap-4">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-secondary">
+                        <span class="material-symbols-outlined">home</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Adresse</h3>
+                </div>
+                <div class="space-y-2">
+                    <label class="ml-1 text-xs font-bold uppercase tracking-wider text-slate-500" for="{{ form.address.id_for_label }}">Adresse complete</label>
+                    {{ form.address }}
+                    {% if form.address.errors %}<p class="text-sm text-red-700">{{ form.address.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+        </section>
+
+        <div class="col-span-12 mt-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-center gap-4 text-slate-400">
+                <span class="material-symbols-outlined">info</span>
+                <p class="text-xs font-medium italic">Les identifiants patient et barcode sont attribues automatiquement lors de la creation.</p>
+            </div>
+            <div class="flex gap-4">
+                <a class="rounded-full px-8 py-4 text-sm font-bold uppercase tracking-widest text-slate-600 transition-colors hover:bg-slate-200" href="{% url 'dashboard' %}">Annuler</a>
+                <button class="flex items-center gap-3 rounded-full bg-primary px-10 py-4 text-sm font-bold uppercase tracking-widest text-white shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95" type="submit">
+                    <span>Enregistrer le patient</span>
+                    <span class="material-symbols-outlined">check_circle</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+{% if last_created_patient %}
+<script>
+    (function () {
+        const printLink = document.getElementById("print-receipt-link");
+        const printStatus = document.getElementById("print-status");
+        const printPanel = document.getElementById("print-panel");
+        if (!printLink) {
+            return;
+        }
+
+        const csrfToken = document.querySelector("input[name='csrfmiddlewaretoken']");
+        const setStatus = function (message, isError) {
+            if (!printStatus) {
+                return;
+            }
+            printStatus.textContent = message || "";
+            printStatus.className = isError ? "mt-3 text-sm font-medium text-red-700" : "mt-3 text-sm font-medium text-emerald-700";
+        };
+
+        printLink.addEventListener("click", async function () {
+            printLink.disabled = true;
+            setStatus("Envoi du ticket a l'imprimante...", false);
+
+            const payload = new URLSearchParams();
+            payload.set("printer", "printer");
+
+            try {
+                const response = await fetch(printLink.dataset.url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                        "X-CSRFToken": csrfToken ? csrfToken.value : "",
+                    },
+                    body: payload.toString(),
+                    credentials: "same-origin",
+                });
+                const data = await response.json();
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.error || "Impression impossible.");
+                }
+                setStatus("Ticket imprime sur " + data.printer + ".", false);
+            } catch (error) {
+                setStatus(error.message || "Erreur d'impression.", true);
+            } finally {
+                printLink.disabled = false;
+            }
+        });
+
+        if (printPanel) {
+            window.setTimeout(function () {
+                printPanel.classList.add("opacity-0");
+                window.setTimeout(function () {
+                    printPanel.remove();
+                }, 500);
+            }, 60000);
+        }
+    }());
+</script>
+{% endif %}
+{% endblock %}
