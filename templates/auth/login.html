@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html class="light" lang="fr">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>HealthSync - Secure Login</title>
+<title>HealthSync - Connexion</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
@@ -18,50 +18,23 @@
               "outline-variant": "#c2c6d4",
               "primary-fixed": "#d6e3ff",
               "on-background": "#191c1d",
-              "on-tertiary-fixed": "#341100",
               "surface-variant": "#e1e3e4",
-              "on-error-container": "#93000a",
               "surface": "#f8f9fa",
-              "on-tertiary-fixed-variant": "#783100",
               "secondary-container": "#d6e4f7",
-              "inverse-surface": "#2e3132",
-              "tertiary-fixed": "#ffdbcb",
-              "tertiary-container": "#a04401",
-              "tertiary-fixed-dim": "#ffb691",
-              "inverse-on-surface": "#f0f1f2",
-              "on-tertiary": "#ffffff",
-              "on-primary-container": "#cadcff",
-              "on-secondary-fixed": "#0f1d2a",
-              "error": "#ba1a1a",
               "surface-container-highest": "#e1e3e4",
               "outline": "#727783",
               "on-surface": "#191c1d",
-              "error-container": "#ffdad6",
-              "on-primary-fixed-variant": "#00468b",
               "on-secondary": "#ffffff",
-              "primary-container": "#005fb8",
               "background": "#f8f9fa",
               "on-surface-variant": "#424752",
-              "secondary-fixed": "#d6e4f7",
               "primary": "#00488d",
               "on-primary": "#ffffff",
-              "surface-tint": "#005db5",
+              "secondary": "#53606f",
               "surface-container-lowest": "#ffffff",
               "surface-container-low": "#f3f4f5",
-              "secondary-fixed-dim": "#bac8da",
-              "on-secondary-container": "#586676",
               "surface-container-high": "#e7e8e9",
-              "on-secondary-fixed-variant": "#3b4857",
-              "surface-bright": "#f8f9fa",
-              "on-tertiary-container": "#ffd1bc",
-              "inverse-primary": "#a8c8ff",
-              "primary-fixed-dim": "#a8c8ff",
-              "on-error": "#ffffff",
-              "tertiary": "#7b3200",
-              "surface-dim": "#d9dadb",
-              "secondary": "#53606f",
-              "on-primary-fixed": "#001b3d",
-              "surface-container": "#edeeef"
+              "surface-container": "#edeeef",
+              "primary-container": "#005fb8"
             },
             fontFamily: {
               "headline": ["Manrope", "sans-serif"],
@@ -76,26 +49,6 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="{% static 'js/asset_diagnostics.js' %}"></script>
 <link href="{% static 'css/login.css' %}" rel="stylesheet"/>
-<style>
-        html, body {
-            height: 100%;
-            margin: 0;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            display: inline-block;
-            line-height: 1;
-        }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-        }
-        .bg-medical-abstract {
-            background-image: radial-gradient(circle at 2px 2px, #d6e3ff 1px, transparent 0);
-            background-size: 40px 40px;
-        }
-    </style>
 </head>
 <body class="h-screen overflow-hidden bg-surface font-body text-on-surface">
 <div class="flex h-screen flex-col">
@@ -104,7 +57,7 @@
 <span class="font-headline text-2xl font-black tracking-tighter text-blue-800">HealthSync</span>
 </div>
 <div class="flex items-center gap-4">
-<button class="rounded-full p-2 text-slate-500 transition-colors duration-200 hover:bg-slate-200/50 active:scale-95">
+<button class="rounded-full p-2 text-slate-500 transition-colors duration-200 hover:bg-slate-200/50 active:scale-95" type="button">
 <span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
 </button>
 </div>
@@ -119,7 +72,7 @@
 <div class="mb-8 text-center">
 <h1 class="mb-2 font-headline text-3xl font-extrabold tracking-tight text-primary">Secure Access</h1>
 <p class="font-medium text-on-surface-variant">Administrative Control Interface</p>
-<p class="mt-2 text-xs text-on-surface-variant">Déjà un compte actif ? Connectez-vous ici. Si un compte vous a été attribué avec un mot de passe temporaire, utilisez le bouton ci-dessous pour l’activer.</p>
+<p class="mt-2 text-xs text-on-surface-variant">Connectez-vous directement avec vos identifiants pour acceder a votre tableau de bord.</p>
 {% for message in messages %}
 <p class="mt-3 text-sm text-error">{{ message }}</p>
 {% endfor %}
@@ -131,7 +84,7 @@
 <label class="block px-1 font-headline text-sm font-bold uppercase tracking-wide text-on-surface-variant">Email/Username</label>
 <div class="group relative">
 <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary">person</span>
-<input class="w-full rounded-xl bg-surface-container-highest py-3.5 pl-12 pr-4 font-medium text-on-surface outline-none transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20" placeholder="administrator@clinical.arch" type="text" name="email" required/>
+<input class="w-full rounded-xl bg-surface-container-highest py-3.5 pl-12 pr-4 font-medium text-on-surface outline-none transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20" name="email" placeholder="administrator@clinical.arch" required type="text" value="{{ submitted_email|default:'' }}"/>
 </div>
 </div>
 
@@ -142,9 +95,9 @@
 </div>
 <div class="group relative">
 <span class="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary">lock</span>
-<input class="w-full rounded-xl bg-surface-container-highest py-3.5 pl-12 pr-12 font-medium text-on-surface outline-none transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20" placeholder="••••••••••••" type="password" name="password" required/>
-<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface" type="button">
-<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+<input class="w-full rounded-xl bg-surface-container-highest py-3.5 pl-12 pr-12 font-medium text-on-surface outline-none transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20" id="login-password" name="password" placeholder="••••••••••••" required type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface" id="toggle-password-visibility" type="button">
+<span class="material-symbols-outlined" id="toggle-password-icon">visibility</span>
 </button>
 </div>
 </div>
@@ -160,11 +113,6 @@
                         Sign In
                         <span class="material-symbols-outlined text-xl">arrow_forward</span>
 </button>
-
-<a class="flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant bg-surface-container-lowest py-3.5 font-headline text-base font-bold text-primary transition-all hover:bg-surface-container-low active:scale-[0.98]" href="{% url 'activate_account' %}">
-                        Activer mon compte
-                        <span class="material-symbols-outlined text-xl">person_add</span>
-</a>
 </form>
 
 <div class="mt-8 flex items-center justify-center gap-6 border-t border-outline-variant/10 pt-6 opacity-60 grayscale">
@@ -193,4 +141,5 @@
 </footer>
 </div>
 </body>
+<script src="{% static 'js/login.js' %}"></script>
 </html>

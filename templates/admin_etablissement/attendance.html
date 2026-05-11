@@ -1,0 +1,109 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Presences medecins{% endblock %}
+
+{% block content %}
+<div class="p-8 space-y-10">
+    <header class="flex justify-between items-end gap-6 flex-wrap">
+        <div>
+            <h1 class="text-4xl font-extrabold headline-font text-on-background tracking-tight">Presences medecins</h1>
+            <p class="text-on-surface-variant mt-2">{{ etablissement.nom }} · suivi du jour et historique recent.</p>
+        </div>
+        <div class="flex gap-4 flex-wrap">
+            <div class="rounded-xl bg-surface-container-lowest px-5 py-4">
+                <p class="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Presents</p>
+                <p class="text-2xl font-extrabold text-on-surface">{{ attendance_stats.doctors_present }}</p>
+            </div>
+            <div class="rounded-xl bg-surface-container-lowest px-5 py-4">
+                <p class="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Absents</p>
+                <p class="text-2xl font-extrabold text-on-surface">{{ attendance_stats.doctors_absent }}</p>
+            </div>
+            <div class="rounded-xl bg-surface-container-lowest px-5 py-4">
+                <p class="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Total</p>
+                <p class="text-2xl font-extrabold text-on-surface">{{ attendance_stats.doctors_total }}</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+        <form class="border-b border-surface-container-low bg-surface-container-low p-6" method="get">
+            <div class="relative max-w-md">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                <input class="w-full rounded-full border-none bg-surface-container-lowest py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20" name="q" placeholder="Search by doctor name, ID or specialty..." type="text" value="{{ search_query }}">
+            </div>
+        </form>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Physician</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Specialty</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Status</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Check-in</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Check-out</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for row in attendance_rows %}
+                    <tr class="hover:bg-surface-container-low/40 transition-colors">
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                                    {{ row.doctor_link.medecin.user.first_name|default:"D"|slice:":1"|upper }}{{ row.doctor_link.medecin.user.last_name|default:"R"|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-sm text-on-surface">{{ row.doctor_link.medecin.full_name|default:row.doctor_link.medecin.email }}</p>
+                                    <p class="text-[10px] uppercase tracking-wider text-on-surface-variant">ID: {{ row.doctor_link.medecin.id }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-5 text-sm text-on-surface-variant">{{ row.doctor_link.medecin.specialite|default:"General Practice" }}</td>
+                        <td class="px-6 py-5">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {% if row.is_checked_in %}bg-green-100 text-green-700{% elif row.presence %}bg-red-100 text-red-700{% else %}bg-slate-100 text-slate-500{% endif %}">
+                                {% if row.is_checked_in %}Present{% elif row.presence %}Cloture{% else %}Expected{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-5 text-sm font-semibold text-on-surface">{% if row.presence and row.presence.check_in_time %}{{ row.presence.check_in_time|date:"h:i A" }}{% else %}-{% endif %}</td>
+                        <td class="px-6 py-5 text-sm font-semibold text-on-surface">{% if row.presence and row.presence.check_out_time %}{{ row.presence.check_out_time|date:"h:i A" }}{% else %}-{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="px-6 py-8 text-sm text-on-surface-variant" colspan="5">{% if search_query %}No physician matches this search.{% else %}No physician linked to this facility.{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <section>
+        <h3 class="text-xl font-bold headline-font text-on-background mb-6">Recent Presence Logs</h3>
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Doctor Name</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Check-in/Out</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Duration</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Declared By</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant text-right">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for log in recent_logs %}
+                    <tr class="hover:bg-surface-container-low/40 transition-colors">
+                        <td class="px-6 py-5 font-bold text-sm">{{ log.medecin.full_name|default:log.medecin.email }}</td>
+                        <td class="px-6 py-5 text-sm">{% if log.check_in_time %}{{ log.check_in_time|date:"h:i A" }}{% else %}-{% endif %} / {% if log.check_out_time %}{{ log.check_out_time|date:"h:i A" }}{% else %}-{% endif %}</td>
+                        <td class="px-6 py-5 text-sm">{% if log.duration_display %}{{ log.duration_display }}{% else %}-{% endif %}</td>
+                        <td class="px-6 py-5 text-sm text-on-surface-variant">{% if log.declared_by_user %}{{ log.declared_by_user.first_name }} {{ log.declared_by_user.last_name }}{% else %}System{% endif %}</td>
+                        <td class="px-6 py-5 text-right text-sm text-on-surface-variant">{{ log.presence_date|date:"M d, Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td class="px-6 py-8 text-sm text-on-surface-variant" colspan="5">No recent presence logs for this facility.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

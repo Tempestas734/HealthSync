@@ -134,5 +134,28 @@
             </div>
         </div>
     </section>
+
+    <section class="bg-surface-container-lowest rounded-xl p-8">
+        <div class="flex items-center justify-between gap-4 flex-wrap mb-6">
+            <div>
+                <h4 class="text-xl font-bold text-on-surface">Permissions staff</h4>
+                <p class="text-sm text-on-surface-variant mt-1">Permissions actuellement appliquees a ce membre du personnel.</p>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-surface-container-low text-on-surface-variant">Table dediee</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for permission in permission_rows %}
+            <div class="rounded-xl border px-4 py-4 {% if permission.enabled %}border-emerald-200 bg-emerald-50{% else %}border-surface-container bg-surface-container-low{% endif %}">
+                <div class="flex items-center justify-between gap-4">
+                    <span class="text-sm font-semibold {% if permission.enabled %}text-emerald-800{% else %}text-on-surface{% endif %}">{{ permission.label }}</span>
+                    <span class="text-xs font-bold uppercase tracking-wide {% if permission.enabled %}text-emerald-700{% else %}text-on-surface-variant{% endif %}">
+                        {% if permission.enabled %}Autorise{% else %}Bloque{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="mt-4 text-xs text-on-surface-variant">Ces permissions sont lues depuis la table `personnel_etablissement_permissions` lorsqu'un enregistrement existe.</p>
+    </section>
 </div>
 {% endblock %}

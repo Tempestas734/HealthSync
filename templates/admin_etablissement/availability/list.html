@@ -1,4 +1,5 @@
 {% extends "base/base.html" %}
+{% load static %}
 
 {% block title %}HealthSync - Disponibilites Medecins{% endblock %}
 
@@ -9,12 +10,12 @@
             <p class="text-xs font-bold uppercase tracking-[0.3em] text-primary">Admin Etablissement</p>
             <h1 class="mt-2 text-4xl font-extrabold headline-font tracking-tight text-on-surface">Gestion des Disponibilites</h1>
             <p class="mt-2 max-w-3xl text-sm text-on-surface-variant">
-                Suivez les indisponibilites annuelles des medecins rattaches a {{ etablissement.nom }} et preparez le module de conges depuis la liste.
+                Suivez les indisponibilites annuelles des medecins rattaches a {{ etablissement.nom }}, leurs droits et l'etat de leur acces.
             </p>
         </div>
         <div class="flex flex-wrap gap-4">
             <div class="min-w-[180px] rounded-2xl bg-surface-container-lowest px-5 py-4 shadow-sm">
-                <div class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Medecins actifs</div>
+                <div class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Medecins lies</div>
                 <div class="mt-2 text-3xl font-extrabold headline-font text-on-surface">{{ doctors_count }}</div>
             </div>
             <div class="min-w-[180px] rounded-2xl bg-surface-container-lowest px-5 py-4 shadow-sm">
@@ -65,7 +66,7 @@
                 <div class="flex items-center justify-between border-b border-surface-container px-6 py-5">
                     <div>
                         <h2 class="text-2xl font-bold headline-font tracking-tight text-on-surface">Liste des medecins</h2>
-                        <p class="mt-1 text-sm text-on-surface-variant">Chaque ligne expose l'etat actuel et les prochaines plages d'indisponibilite.</p>
+                        <p class="mt-1 text-sm text-on-surface-variant">Chaque ligne expose l'etat actuel, les droits et les prochaines plages d'indisponibilite.</p>
                     </div>
                 </div>
 
@@ -76,6 +77,7 @@
                                 <th class="px-6 py-4">Praticien</th>
                                 <th class="px-6 py-4">Specialite</th>
                                 <th class="px-6 py-4">Statut</th>
+                                <th class="px-6 py-4">Droits</th>
                                 <th class="px-6 py-4">Prochaines periodes</th>
                                 <th class="px-6 py-4 text-right">Actions</th>
                             </tr>
@@ -106,11 +108,30 @@
                                         {{ row.current_entry.type_display_name }} en cours
                                     </div>
                                     {% else %}
+                                    {% if row.doctor_link.actif %}
                                     <div class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
                                         <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                                         Disponible
                                     </div>
+                                    {% else %}
+                                    <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700">
+                                        <span class="h-2 w-2 rounded-full bg-slate-500"></span>
+                                        Acces desactive
+                                    </div>
                                     {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="space-y-2">
+                                        <div class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold {% if row.doctor_link.can_issue_prescriptions %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                                            <span class="h-2 w-2 rounded-full {% if row.doctor_link.can_issue_prescriptions %}bg-emerald-500{% else %}bg-slate-400{% endif %}"></span>
+                                            Prescription {% if row.doctor_link.can_issue_prescriptions %}autorisee{% else %}bloquee{% endif %}
+                                        </div>
+                                        <div class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold {% if row.doctor_link.can_sign_documents %}bg-blue-50 text-blue-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                                            <span class="h-2 w-2 rounded-full {% if row.doctor_link.can_sign_documents %}bg-blue-500{% else %}bg-slate-400{% endif %}"></span>
+                                            Signature {% if row.doctor_link.can_sign_documents %}autorisee{% else %}bloquee{% endif %}
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-5">
                                     {% if row.next_periods %}
@@ -130,6 +151,12 @@
                                 </td>
                                 <td class="px-6 py-5 text-right">
                                     <div class="flex justify-end gap-2">
+                                        <form action="{% url 'admin_etablissement_doctor_toggle_access' row.doctor.id %}" method="post">
+                                            {% csrf_token %}
+                                            <button class="rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider transition {% if row.doctor_link.actif %}bg-slate-100 text-slate-700 hover:bg-slate-200{% else %}bg-emerald-100 text-emerald-700 hover:bg-emerald-200{% endif %}" type="submit">
+                                                {% if row.doctor_link.actif %}Desactiver acces{% else %}Activer acces{% endif %}
+                                            </button>
+                                        </form>
                                         <button class="calendar-modal-trigger rounded-xl bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary ring-1 ring-primary/15 transition hover:bg-primary/5" data-calendar-payload="{{ row.calendar_payload_json|escape }}" type="button">
                                             Calendrier
                                         </button>
@@ -144,7 +171,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td class="px-6 py-10 text-center text-on-surface-variant" colspan="5">Aucun medecin actif n'est rattache a cet etablissement.</td>
+                                <td class="px-6 py-10 text-center text-on-surface-variant" colspan="6">Aucun medecin n'est rattache a cet etablissement.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -234,202 +261,60 @@
     </section>
 </div>
 
-<div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/50 px-4" id="doctor-calendar-modal">
-    <div class="max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-[32px] bg-surface-container-lowest shadow-2xl">
-        <div class="flex items-center justify-between border-b border-surface-container px-6 py-5">
-            <div>
-                <p class="text-xs font-bold uppercase tracking-[0.3em] text-primary">Calendrier Dynamique</p>
-                <h2 class="mt-2 text-2xl font-extrabold headline-font tracking-tight text-on-surface" id="calendar-modal-title">Medecin</h2>
-                <p class="mt-1 text-sm text-on-surface-variant" id="calendar-modal-subtitle"></p>
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm" id="doctor-calendar-modal">
+    <div class="flex max-h-[84vh] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-white/20 bg-white shadow-2xl">
+        <div class="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-primary-container bg-primary/10 text-lg font-black text-primary" id="calendar-modal-avatar">
+                    DR
+                </div>
+                <div>
+                    <h2 class="text-2xl font-extrabold text-blue-900 headline-font" id="calendar-modal-title">Medecin</h2>
+                    <p class="text-sm font-medium text-secondary" id="calendar-modal-subtitle"></p>
+                </div>
             </div>
-            <button class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-low text-on-surface transition hover:bg-surface-container-high" id="calendar-modal-close" type="button">
-                <span class="material-symbols-outlined">close</span>
+            <div class="flex items-center gap-4 sm:gap-6">
+                <div class="flex gap-1 rounded-full bg-surface-container-low p-1">
+                    <button class="calendar-tab rounded-full px-5 py-2 text-xs font-bold uppercase tracking-widest text-on-surface transition-colors" data-tab="week" type="button">Weekly</button>
+                    <button class="calendar-tab rounded-full px-5 py-2 text-xs font-bold uppercase tracking-widest text-on-surface transition-colors" data-tab="month" type="button">Monthly</button>
+                </div>
+                <button class="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100" id="calendar-modal-close" type="button">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="border-b border-slate-100 bg-slate-50/50 px-5 py-3 sm:px-6">
+            <div class="flex flex-wrap gap-4 text-[11px] font-semibold text-slate-600" id="calendar-modal-legend">
+                <div class="flex items-center gap-2">
+                    <span class="h-3 w-3 rounded-full bg-primary"></span>
+                    <span>Active Shift</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="h-3 w-3 rounded-full bg-orange-400"></span>
+                    <span>Vacation</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="h-3 w-3 rounded-full bg-red-400"></span>
+                    <span>Public Holiday</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid flex-1 grid-cols-1 gap-4 overflow-hidden p-4 sm:p-5">
+            <section class="min-h-0 overflow-hidden" id="calendar-modal-main"></section>
+            <aside class="hidden" id="calendar-modal-side"></aside>
+        </div>
+
+        <div class="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/50 px-5 py-4 sm:px-6 sm:py-5">
+            <button class="rounded-full border border-slate-200 bg-white px-6 py-3 text-xs font-bold uppercase tracking-wider text-secondary transition-colors hover:bg-slate-100" id="calendar-modal-footer-close" type="button">
+                Close
             </button>
-        </div>
-
-        <div class="border-b border-surface-container px-6 py-4">
-            <div class="flex flex-wrap gap-3">
-                <button class="calendar-tab rounded-full bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-white" data-tab="month" type="button">Mois</button>
-                <button class="calendar-tab rounded-full bg-surface-container-low px-4 py-2 text-xs font-bold uppercase tracking-widest text-on-surface" data-tab="week" type="button">Semaine</button>
-                <button class="calendar-tab rounded-full bg-surface-container-low px-4 py-2 text-xs font-bold uppercase tracking-widest text-on-surface" data-tab="year" type="button">Annee</button>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 gap-8 overflow-auto p-6 2xl:grid-cols-[minmax(0,1.25fr)_360px]">
-            <section id="calendar-modal-main"></section>
-            <aside id="calendar-modal-side"></aside>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    (function () {
-        const modal = document.getElementById("doctor-calendar-modal");
-        const closeButton = document.getElementById("calendar-modal-close");
-        const titleNode = document.getElementById("calendar-modal-title");
-        const subtitleNode = document.getElementById("calendar-modal-subtitle");
-        const mainNode = document.getElementById("calendar-modal-main");
-        const sideNode = document.getElementById("calendar-modal-side");
-        const tabs = Array.from(document.querySelectorAll(".calendar-tab"));
-        let activePayload = null;
-        let activeTab = "month";
-
-        function toneClasses(tone) {
-            if (tone === "red") return "ring-2 ring-red-200 bg-red-50/60";
-            if (tone === "amber") return "ring-2 ring-amber-200 bg-amber-50/70";
-            if (tone === "blue") return "ring-2 ring-blue-200 bg-blue-50/70";
-            if (tone === "slate") return "ring-2 ring-slate-200 bg-slate-100/80";
-            return "";
-        }
-
-        function renderMonthView(payload) {
-            const weekdayHeaders = payload.month.weekday_labels.map((label) =>
-                `<div class="px-2 py-2 text-center text-[11px] font-bold uppercase tracking-[0.25em] text-on-surface-variant">${label}</div>`
-            ).join("");
-
-            const dayCells = payload.month.weeks.flat().map((day) => {
-                const entryList = (day.entries || []).map((entry) => `
-                    <div class="rounded-xl bg-white/90 px-2.5 py-2 text-[11px] shadow-sm">
-                        <p class="font-bold text-on-surface">${entry.type}</p>
-                        <p class="mt-0.5 text-on-surface-variant">${entry.motif}</p>
-                    </div>
-                `).join("");
-
-                return `
-                    <div class="relative min-h-[112px] rounded-2xl border p-3 ${day.is_current_month ? 'border-surface-container bg-white' : 'border-transparent bg-surface-container-low text-on-surface-variant/60'} ${day.is_blocked ? toneClasses(day.tone) : ''}">
-                        <div class="flex items-start justify-between gap-2">
-                            <span class="text-sm font-bold ${day.is_today ? 'text-primary' : 'text-on-surface'}">${day.day_number}</span>
-                            ${day.entries && day.entries.length ? `<span class="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface">${day.entries.length}</span>` : ''}
-                        </div>
-                        ${entryList ? `<div class="mt-3 space-y-2">${entryList}</div>` : ''}
-                    </div>
-                `;
-            }).join("");
-
-            mainNode.innerHTML = `
-                <div class="rounded-[32px] bg-surface-container-low p-5">
-                    <div class="mb-5">
-                        <h3 class="text-2xl font-bold headline-font tracking-tight text-on-surface">${payload.month.label}</h3>
-                        <p class="mt-1 text-sm text-on-surface-variant">Vue mensuelle des zones d'indisponibilite.</p>
-                    </div>
-                    <div class="grid grid-cols-7 gap-3">${weekdayHeaders}${dayCells}</div>
-                </div>
-            `;
-
-            sideNode.innerHTML = `
-                <div class="rounded-[32px] bg-surface-container-low p-5">
-                    <h3 class="text-xl font-bold headline-font tracking-tight text-on-surface">Indisponibilites du mois</h3>
-                    <div class="mt-4 space-y-3">
-                        ${(payload.month.items || []).length ? payload.month.items.map((item) => `
-                            <div class="rounded-2xl bg-white px-4 py-3 shadow-sm">
-                                <p class="font-bold text-on-surface">${item.type}</p>
-                                <p class="mt-1 text-sm text-on-surface">${item.motif}</p>
-                                <p class="mt-1 text-xs text-on-surface-variant">${item.date_start} - ${item.date_end}</p>
-                            </div>
-                        `).join("") : '<div class="rounded-2xl bg-white px-4 py-5 text-sm text-on-surface-variant shadow-sm">Aucune indisponibilite sur ce mois.</div>'}
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderWeekView(payload) {
-            mainNode.innerHTML = `
-                <div class="rounded-[32px] bg-surface-container-low p-5">
-                    <h3 class="text-2xl font-bold headline-font tracking-tight text-on-surface">${payload.week.label}</h3>
-                    <div class="mt-5 space-y-3">
-                        ${(payload.week.items || []).length ? payload.week.items.map((item) => `
-                            <div class="rounded-2xl bg-white px-5 py-4 shadow-sm">
-                                <div class="flex items-center justify-between gap-3">
-                                    <p class="font-bold text-on-surface">${item.type}</p>
-                                    <span class="rounded-full bg-surface-container-low px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">${item.date_start}</span>
-                                </div>
-                                <p class="mt-2 text-sm text-on-surface">${item.motif}</p>
-                                <p class="mt-1 text-xs text-on-surface-variant">${item.date_start} - ${item.date_end}</p>
-                            </div>
-                        `).join("") : '<div class="rounded-2xl bg-white px-5 py-6 text-sm text-on-surface-variant shadow-sm">Aucune indisponibilite sur cette semaine.</div>'}
-                    </div>
-                </div>
-            `;
-            sideNode.innerHTML = `
-                <div class="rounded-[32px] bg-surface-container-low p-5">
-                    <h3 class="text-xl font-bold headline-font tracking-tight text-on-surface">Resume semaine</h3>
-                    <p class="mt-3 text-sm text-on-surface-variant">Le panneau hebdomadaire liste toutes les periodes qui touchent la semaine en cours.</p>
-                </div>
-            `;
-        }
-
-        function renderYearView(payload) {
-            mainNode.innerHTML = `
-                <div class="rounded-[32px] bg-surface-container-low p-5">
-                    <h3 class="text-2xl font-bold headline-font tracking-tight text-on-surface">Annee ${payload.year.label}</h3>
-                    <div class="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                        ${payload.year.summary.map((item) => `
-                            <div class="rounded-2xl bg-white px-5 py-4 shadow-sm">
-                                <div class="flex items-center justify-between gap-3">
-                                    <p class="font-bold text-on-surface">${item.month}</p>
-                                    <span class="rounded-full bg-primary-fixed/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">${item.count}</span>
-                                </div>
-                                <p class="mt-2 text-xs text-on-surface-variant">${item.types}</p>
-                            </div>
-                        `).join("")}
-                    </div>
-                </div>
-            `;
-            sideNode.innerHTML = `
-                <div class="rounded-[32px] bg-surface-container-low p-5">
-                    <h3 class="text-xl font-bold headline-font tracking-tight text-on-surface">Lecture annuelle</h3>
-                    <p class="mt-3 text-sm text-on-surface-variant">Cette vue resume le nombre d'indisponibilites enregistrees par mois sur l'annee courante.</p>
-                </div>
-            `;
-        }
-
-        function renderActiveTab() {
-            if (!activePayload) return;
-            tabs.forEach((tab) => {
-                const isActive = tab.dataset.tab === activeTab;
-                tab.className = isActive
-                    ? "calendar-tab rounded-full bg-primary px-4 py-2 text-xs font-bold uppercase tracking-widest text-white"
-                    : "calendar-tab rounded-full bg-surface-container-low px-4 py-2 text-xs font-bold uppercase tracking-widest text-on-surface";
-            });
-            if (activeTab === "month") renderMonthView(activePayload);
-            if (activeTab === "week") renderWeekView(activePayload);
-            if (activeTab === "year") renderYearView(activePayload);
-        }
-
-        document.querySelectorAll(".calendar-modal-trigger").forEach((button) => {
-            button.addEventListener("click", () => {
-                const rawPayload = button.dataset.calendarPayload;
-                if (!rawPayload) return;
-                activePayload = JSON.parse(rawPayload);
-                activeTab = "month";
-                titleNode.textContent = activePayload.doctor_name;
-                subtitleNode.textContent = activePayload.specialite;
-                renderActiveTab();
-                modal.classList.remove("hidden");
-                modal.classList.add("flex");
-            });
-        });
-
-        tabs.forEach((tab) => {
-            tab.addEventListener("click", () => {
-                activeTab = tab.dataset.tab;
-                renderActiveTab();
-            });
-        });
-
-        function closeModal() {
-            modal.classList.add("hidden");
-            modal.classList.remove("flex");
-        }
-
-        closeButton.addEventListener("click", closeModal);
-        modal.addEventListener("click", (event) => {
-            if (event.target === modal) {
-                closeModal();
-            }
-        });
-    })();
-</script>
+<script src="{% static 'js/admin_availability_list.js' %}"></script>
 {% endblock %}

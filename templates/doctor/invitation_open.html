@@ -1,0 +1,66 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Invitation Etablissement{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8 max-w-5xl mx-auto space-y-8">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.25em] text-primary">Invitation</p>
+            <h1 class="mt-2 text-4xl font-extrabold headline-font tracking-tight text-on-surface">{{ invitation.etablissement.nom }}</h1>
+            <p class="mt-2 text-sm text-on-surface-variant">Consultez le statut de l'invitation et validez-la avec votre code PIN.</p>
+        </div>
+        <a class="rounded-xl bg-surface-container-low px-5 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'doctor_invitations' %}">Retour aux invitations</a>
+    </div>
+
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.3fr)_360px]">
+        <section class="rounded-[28px] bg-surface-container-lowest p-8 shadow-sm">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div class="rounded-2xl bg-surface-container-low p-5">
+                    <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Etablissement</p>
+                    <p class="mt-2 text-xl font-bold text-on-surface">{{ invitation.etablissement.nom }}</p>
+                    <p class="mt-1 text-sm text-on-surface-variant">{{ invitation.etablissement.type_display_name }}{% if invitation.etablissement.ville %} - {{ invitation.etablissement.ville }}{% endif %}</p>
+                </div>
+                <div class="rounded-2xl bg-surface-container-low p-5">
+                    <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Role propose</p>
+                    <p class="mt-2 text-xl font-bold text-on-surface">{{ invitation.role_display_name }}</p>
+                    <p class="mt-1 text-sm text-on-surface-variant">Etat actuel : {{ invitation.status_display_name }}</p>
+                </div>
+            </div>
+
+            <div class="mt-6 rounded-2xl bg-surface-container-low p-6">
+                <p class="text-sm font-semibold text-on-surface">Droits accordes</p>
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <span class="rounded-full px-3 py-1 text-xs font-bold uppercase {% if invitation.can_issue_prescriptions %}bg-emerald-100 text-emerald-700{% else %}bg-surface-container-high text-on-surface-variant{% endif %}">
+                        Prescription {% if invitation.can_issue_prescriptions %}autorisee{% else %}bloquee{% endif %}
+                    </span>
+                    <span class="rounded-full px-3 py-1 text-xs font-bold uppercase {% if invitation.can_sign_documents %}bg-emerald-100 text-emerald-700{% else %}bg-surface-container-high text-on-surface-variant{% endif %}">
+                        Signature {% if invitation.can_sign_documents %}autorisee{% else %}bloquee{% endif %}
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <aside class="rounded-[28px] bg-surface-container-lowest p-8 shadow-sm">
+            <h2 class="text-2xl font-bold headline-font tracking-tight text-on-surface">Validation</h2>
+            <p class="mt-2 text-sm text-on-surface-variant">Le lien vous identifie. Le code PIN reste obligatoire pour accepter ou refuser.</p>
+
+            {% if invitation.status == "pending" %}
+            <form class="mt-6 space-y-4" method="post" action="{% url 'doctor_invitation_decision' invitation.id %}">
+                {% csrf_token %}
+                <label class="block">
+                    <span class="text-sm font-semibold text-on-surface">{{ decision_form.pin_code.label }}</span>
+                    {{ decision_form.pin_code }}
+                </label>
+                <button class="flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:opacity-90" name="action" type="submit" value="accept">Accepter l'invitation</button>
+                <button class="flex w-full items-center justify-center rounded-full bg-error-container px-6 py-3 text-sm font-bold uppercase tracking-wider text-error transition hover:opacity-90" name="action" type="submit" value="reject">Refuser l'invitation</button>
+            </form>
+            {% else %}
+            <div class="mt-6 rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant">
+                Cette invitation est deja traitee : <span class="font-bold text-on-surface">{{ invitation.status_display_name }}</span>.
+            </div>
+            {% endif %}
+        </aside>
+    </div>
+</div>
+{% endblock %}

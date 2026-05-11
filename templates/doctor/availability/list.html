@@ -1,0 +1,95 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Disponibilites Medecin{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8 space-y-8">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.25em] text-primary">Disponibilites</p>
+            <h1 class="mt-2 text-4xl font-extrabold headline-font tracking-tight text-on-surface">{{ doctor_profile.full_name|default:doctor_profile.email }}</h1>
+            <p class="mt-2 text-sm text-on-surface-variant">Horaires, indisponibilites et conges par etablissement lie.</p>
+        </div>
+        <form method="get" class="flex items-center gap-3">
+            <select class="rounded-xl border-0 bg-surface-container-low px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-primary/20" name="facility">
+                {% for link in doctor_facility_links %}
+                <option value="{{ link.etablissement_id }}" {% if selected_facility_id == link.etablissement_id %}selected{% endif %}>{{ link.etablissement.nom }}</option>
+                {% endfor %}
+            </select>
+            <button class="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:opacity-90" type="submit">Changer</button>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.25fr)_380px]">
+        <section class="space-y-6">
+            <div class="rounded-[28px] bg-surface-container-lowest p-8 shadow-sm">
+                <div class="flex items-center justify-between gap-4 flex-wrap">
+                    <div>
+                        <h2 class="text-2xl font-bold headline-font tracking-tight text-on-surface">{{ selected_link.etablissement.nom }}</h2>
+                        <p class="mt-1 text-sm text-on-surface-variant">Etablissement actuellement selectionne.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <a class="rounded-xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'doctor_schedule' %}?facility={{ selected_link.etablissement_id }}">Horaires</a>
+                        <a class="rounded-xl bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'doctor_calendar' %}?facility={{ selected_link.etablissement_id }}">Calendrier</a>
+                        <a class="rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90" href="{% url 'doctor_leaves' %}?facility={{ selected_link.etablissement_id }}">Conges</a>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div class="rounded-2xl bg-surface-container-low p-5">
+                        <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Indisponibilites</p>
+                        <p class="mt-2 text-3xl font-extrabold text-on-surface">{{ entries_count }}</p>
+                    </div>
+                    <div class="rounded-2xl bg-surface-container-low p-5">
+                        <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Etat actuel</p>
+                        <p class="mt-2 text-lg font-bold text-on-surface">{% if current_entry %}{{ current_entry.type_display_name }}{% else %}Disponible{% endif %}</p>
+                    </div>
+                    <div class="rounded-2xl bg-surface-container-low p-5">
+                        <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Prochains creneaux</p>
+                        <p class="mt-2 text-lg font-bold text-on-surface">{{ next_periods|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-[28px] bg-surface-container-lowest p-8 shadow-sm">
+                <h2 class="text-2xl font-bold headline-font tracking-tight text-on-surface">Historique recent</h2>
+                <div class="mt-6 space-y-4">
+                    {% for entry in entries %}
+                    <div class="rounded-2xl bg-surface-container-low px-5 py-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="font-bold text-on-surface">{{ entry.type_display_name }} - {{ entry.motif }}</p>
+                                <p class="mt-1 text-sm text-on-surface-variant">{{ entry.date_debut|date:"d/m/Y" }} - {{ entry.date_fin|date:"d/m/Y" }}</p>
+                            </div>
+                            <span class="rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">{{ entry.full_day_label }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="rounded-2xl bg-surface-container-low px-5 py-6 text-sm text-on-surface-variant">Aucune indisponibilite enregistree.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <aside class="rounded-[28px] bg-surface-container-lowest p-8 shadow-sm">
+            <h2 class="text-2xl font-bold headline-font tracking-tight text-on-surface">Nouvelle indisponibilite</h2>
+            <form class="mt-6 space-y-4" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="facility" value="{{ selected_link.etablissement_id }}">
+                {% for field in form %}
+                    {% if field.name != "medecin" %}
+                    <label class="block">
+                        <span class="text-sm font-semibold text-on-surface">{{ field.label }}</span>
+                        <div class="mt-2">{{ field }}</div>
+                        {% if field.errors %}<p class="mt-2 text-xs text-error">{{ field.errors.0 }}</p>{% endif %}
+                    </label>
+                    {% else %}
+                    {{ field }}
+                    {% endif %}
+                {% endfor %}
+                <button class="flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:opacity-90" type="submit">Enregistrer</button>
+            </form>
+        </aside>
+    </div>
+</div>
+{% endblock %}

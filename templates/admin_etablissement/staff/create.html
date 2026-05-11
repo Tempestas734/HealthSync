@@ -8,7 +8,7 @@
         <div class="mb-8">
             <h3 class="text-xl font-bold text-on-surface">{{ page_heading }}</h3>
             <p class="text-sm text-on-surface-variant mt-1">
-                Create a secretary or infirmier account for {{ etablissement.nom }}.
+                Create a staff account for {{ etablissement.nom }} and assign an allowed facility role.
             </p>
         </div>
 
@@ -45,6 +45,32 @@
                 {{ form.role }}
                 {% if form.role.errors %}<p class="mt-2 text-xs text-error">{{ form.role.errors.0 }}</p>{% endif %}
             </label>
+
+            <div class="md:col-span-2 rounded-xl border border-surface-container bg-surface-container-low px-5 py-5">
+                <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
+                    <div>
+                        <p class="text-sm font-semibold text-on-surface">Permissions du staff</p>
+                        <p class="text-xs text-on-surface-variant mt-1">Ces permissions seront sauvegardees pour ce membre du personnel.</p>
+                    </div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Table dediee</span>
+                </div>
+                {% if permission_form.non_field_errors %}
+                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {{ permission_form.non_field_errors }}
+                </div>
+                {% endif %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {% for field in permission_form %}
+                    <label class="rounded-xl bg-surface-container-high px-4 py-4 flex items-start gap-3">
+                        {{ field }}
+                        <div>
+                            <p class="text-sm font-semibold text-on-surface">{{ field.label }}</p>
+                            {% if field.errors %}<p class="mt-1 text-xs text-error">{{ field.errors.0 }}</p>{% endif %}
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
 
             <label class="block md:col-span-2">
                 <span class="text-sm font-semibold text-on-surface">Temporary password</span>

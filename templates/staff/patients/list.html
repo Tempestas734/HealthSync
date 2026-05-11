@@ -1,0 +1,80 @@
+{% extends "base/base.html" %}
+
+{% block title %}Patients | HealthSync{% endblock %}
+
+{% block content %}
+<main class="mx-auto w-full max-w-7xl px-8 pb-12 space-y-8">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+            <div class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+                <span>Patients</span>
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+                <span class="text-primary">Liste</span>
+            </div>
+            <h2 class="text-4xl font-extrabold tracking-tight text-slate-900">Patients de {{ staff_facility.nom }}</h2>
+            <p class="mt-2 text-sm font-medium text-slate-500">{{ patients_count }} patient{{ patients_count|pluralize }} dans l'etablissement.</p>
+        </div>
+        <a class="rounded-full bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-primary/20 transition hover:opacity-90" href="{% url 'staff_patient_create' %}">Nouveau patient</a>
+    </div>
+
+    <div class="rounded-[2rem] bg-surface-container-lowest shadow-sm overflow-hidden">
+        <form class="border-b border-surface-container bg-surface-container-low p-6 flex flex-wrap gap-4 items-center" method="get">
+            <input class="min-w-72 rounded-xl border-0 bg-white px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20" name="q" placeholder="Nom, CIN / code patient, barcode, email ou telephone" type="text" value="{{ filters.q }}">
+            <select class="rounded-xl border-0 bg-white px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-primary/20" name="status">
+                <option value="">Tous les statuts</option>
+                <option value="active" {% if filters.status == "active" %}selected{% endif %}>Actif</option>
+                <option value="inactive" {% if filters.status == "inactive" %}selected{% endif %}>Inactif</option>
+            </select>
+            <div class="ml-auto flex items-center gap-3">
+                <button class="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:opacity-90" type="submit">Rechercher</button>
+                <a class="rounded-xl bg-surface-container-high px-4 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container" href="{% url 'staff_patient_list' %}">Reinitialiser</a>
+            </div>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Patient</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Code / Barcode</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Contact</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Groupe</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Statut</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for patient in patients %}
+                    <tr class="hover:bg-surface-container-low/50 transition-colors">
+                        <td class="px-6 py-5">
+                            <p class="text-sm font-bold text-on-surface">{{ patient.full_name }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ patient.date_of_birth|date:"d/m/Y"|default:"-" }}</p>
+                        </td>
+                        <td class="px-6 py-5">
+                            <p class="text-sm font-semibold text-on-surface">{{ patient.patient_code|default:"-" }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ patient.barcode_value }}</p>
+                            <p class="text-xs text-on-surface-variant">CIN / Code patient: {{ patient.patient_code|default:"-" }}</p>
+                        </td>
+                        <td class="px-6 py-5">
+                            <p class="text-sm text-on-surface">{{ patient.phone|default:"-" }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ patient.email|default:"-" }}</p>
+                        </td>
+                        <td class="px-6 py-5 text-sm text-on-surface">{{ patient.blood_group|default:"-" }}</td>
+                        <td class="px-6 py-5">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold {% if patient.is_active %}bg-secondary-container text-on-secondary-container{% else %}bg-error-container text-on-error-container{% endif %}">
+                                {% if patient.is_active %}Actif{% else %}Inactif{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-5 text-right">
+                            <a class="text-sm font-bold text-primary hover:underline" href="{% url 'staff_patient_detail' patient.id %}">Voir la fiche</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td class="px-6 py-10 text-center text-on-surface-variant" colspan="6">Aucun patient trouve.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+{% endblock %}

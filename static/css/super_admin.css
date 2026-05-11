@@ -260,6 +260,20 @@ body,
     box-shadow: 0 16px 36px rgba(0, 72, 141, 0.20) !important;
 }
 
+.btn-primary-gradient {
+    background: linear-gradient(180deg, #0b67c2 0%, #00488d 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 16px 36px rgba(0, 72, 141, 0.20) !important;
+}
+
+.btn-primary-gradient:hover {
+    filter: brightness(1.04);
+}
+
+.btn-primary-gradient .material-symbols-outlined {
+    color: inherit;
+}
+
 .bg-primary-fixed\/30 {
     background-color: rgba(214, 227, 255, 0.55) !important;
 }

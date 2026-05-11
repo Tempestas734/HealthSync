@@ -1,0 +1,56 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Detail Rendez-vous{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8 max-w-6xl mx-auto space-y-8">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.25em] text-primary">Rendez-vous</p>
+            <h1 class="mt-2 text-4xl font-extrabold headline-font tracking-tight text-on-surface">{{ appointment.patient.full_name }}</h1>
+            <p class="mt-2 text-sm text-on-surface-variant">{{ appointment.scheduled_at|date:"d/m/Y H:i" }} - {{ appointment.etablissement.nom }}</p>
+        </div>
+        <a class="rounded-xl bg-surface-container-low px-5 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'doctor_appointments' %}">Retour</a>
+    </div>
+
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.2fr)_360px]">
+        <section class="rounded-[28px] bg-surface-container-lowest p-8 shadow-sm">
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div class="rounded-2xl bg-surface-container-low p-5">
+                    <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Patient</p>
+                    <p class="mt-2 text-xl font-bold text-on-surface">{{ appointment.patient.full_name }}</p>
+                    <p class="mt-1 text-sm text-on-surface-variant">{{ appointment.patient.patient_code }}</p>
+                    <p class="mt-1 text-sm text-on-surface-variant">{{ appointment.patient.email|default:"-" }} / {{ appointment.patient.phone|default:"-" }}</p>
+                </div>
+                <div class="rounded-2xl bg-surface-container-low p-5">
+                    <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Consultation</p>
+                    <p class="mt-2 text-xl font-bold text-on-surface">{{ appointment.reason|default:"Consultation" }}</p>
+                    <p class="mt-1 text-sm text-on-surface-variant">{{ appointment.duration_minutes }} minutes</p>
+                </div>
+            </div>
+            {% if appointment.notes %}
+            <div class="mt-6 rounded-2xl bg-surface-container-low p-5">
+                <p class="text-sm font-semibold text-on-surface">Notes</p>
+                <p class="mt-2 text-sm text-on-surface-variant">{{ appointment.notes }}</p>
+            </div>
+            {% endif %}
+        </section>
+
+        <aside class="rounded-[28px] bg-surface-container-lowest p-8 shadow-sm">
+            <h2 class="text-2xl font-bold headline-font tracking-tight text-on-surface">Changer le statut</h2>
+            <form class="mt-6 space-y-4" method="post">
+                {% csrf_token %}
+                <label class="block">
+                    <span class="text-sm font-semibold text-on-surface">Statut</span>
+                    <select class="mt-2 w-full rounded-xl border-0 bg-surface-container-low px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-primary/20" name="status">
+                        {% for value, label in allowed_statuses %}
+                        <option value="{{ value }}" {% if appointment.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button class="flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:opacity-90" type="submit">Mettre a jour</button>
+            </form>
+        </aside>
+    </div>
+</div>
+{% endblock %}

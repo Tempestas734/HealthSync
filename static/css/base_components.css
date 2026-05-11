@@ -1,0 +1,3 @@
+.doctor-facility-toggle[open] .doctor-facility-arrow {
+    transform: rotate(90deg);
+}

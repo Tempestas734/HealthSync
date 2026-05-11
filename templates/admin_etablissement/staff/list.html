@@ -7,7 +7,7 @@
     <div class="flex justify-between items-end gap-4 flex-wrap">
         <div>
             <h2 class="text-3xl font-extrabold text-on-surface tracking-tight headline-font">Staff Management</h2>
-            <p class="text-on-surface-variant mt-1">Secretary and infirmier accounts for {{ etablissement.nom }}.</p>
+            <p class="text-on-surface-variant mt-1">Roles et permissions du personnel pour {{ etablissement.nom }}.</p>
         </div>
         <a class="flex items-center px-6 py-3 bg-gradient-to-b from-primary to-primary-container text-on-primary rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-100 transition-all" href="{% url 'admin_etablissement_staff_create' %}">
             <span class="material-symbols-outlined mr-2">person_add</span>
@@ -22,7 +22,7 @@
             <div class="flex items-center space-x-2 flex-wrap gap-y-2">
                 <span class="text-sm font-semibold text-on-surface-variant">Filter by:</span>
                 <div class="flex space-x-2 flex-wrap gap-y-2">
-                    <input name="q" type="hidden" value="{{ filters.q }}">
+                    <input class="bg-surface-container-low border-none rounded-lg text-sm font-medium py-2 px-4 focus:ring-1 focus:ring-primary/20 min-w-64" name="q" placeholder="Search by name, email or phone" type="text" value="{{ filters.q }}">
                     <select class="bg-surface-container-low border-none rounded-lg text-sm font-medium py-2 px-4 focus:ring-1 focus:ring-primary/20" name="role">
                         <option value="">All Roles</option>
                         {% for role in roles %}
@@ -61,7 +61,8 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-surface-container-low">
-                    {% for user_obj in users %}
+                    {% for row in user_rows %}
+                    {% with user_obj=row.user staff_link=row.staff_link permission_rows=row.permission_rows %}
                     <tr class="hover:bg-surface-container-low/50 transition-colors group">
                         <td class="py-5 px-6">
                             <div class="flex items-center">
@@ -81,6 +82,13 @@
                         <td class="py-5 px-6">
                             {% if user_obj.role %}
                             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-secondary-container text-on-secondary-container">{{ user_obj.role_display_name }}</span>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                {% for permission in permission_rows %}
+                                    {% if permission.enabled %}
+                                    <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700">{{ permission.label }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
                             {% else %}
                             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant">Aucun role</span>
                             {% endif %}
@@ -108,6 +116,7 @@
                             </div>
                         </td>
                     </tr>
+                    {% endwith %}
                     {% empty %}
                     <tr>
                         <td class="px-6 py-10 text-center text-on-surface-variant" colspan="6">No staff found for the current filters.</td>

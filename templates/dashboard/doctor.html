@@ -57,7 +57,7 @@
             <div class="bg-surface-container-lowest p-8 rounded-2xl">
                 <div class="flex justify-between items-center mb-8">
                     <h4 class="text-lg font-bold headline-font">Invitations Recues</h4>
-                    <button class="text-primary text-sm font-bold hover:underline" type="button">Voir tout</button>
+                    <a class="text-primary text-sm font-bold hover:underline" href="{% url 'doctor_invitations' %}">Voir tout</a>
                 </div>
                 <div class="space-y-4">
                     {% for invitation in doctor_invitations %}
@@ -81,9 +81,9 @@
                                 {% else %}bg-secondary-container text-on-secondary-container{% endif %}">
                                 {{ invitation.status_display_name }}
                             </span>
-                            <button class="w-8 h-8 rounded-full bg-white flex items-center justify-center {% if invitation.status == 'accepted' %}text-primary{% else %}text-on-surface-variant{% endif %}" type="button">
+                            <a class="w-8 h-8 rounded-full bg-white flex items-center justify-center {% if invitation.status == 'accepted' %}text-primary{% else %}text-on-surface-variant{% endif %}" href="{% url 'doctor_invitation_open' invitation.invitation_token %}">
                                 <span class="material-symbols-outlined text-lg">chevron_right</span>
-                            </button>
+                            </a>
                         </div>
                     </div>
                     {% empty %}
@@ -126,18 +126,18 @@
             <div class="bg-surface-container-lowest p-8 rounded-2xl">
                 <h4 class="text-lg font-bold headline-font mb-6">Actions Rapides</h4>
                 <div class="space-y-3">
-                    <button class="w-full p-4 flex items-center gap-4 bg-blue-50 text-primary rounded-xl font-bold text-sm hover:bg-blue-100 transition-colors group" type="button">
+                    <a class="w-full p-4 flex items-center gap-4 bg-blue-50 text-primary rounded-xl font-bold text-sm hover:bg-blue-100 transition-colors group" href="{% url 'doctor_appointments' %}">
                         <span class="material-symbols-outlined p-2 bg-white rounded-lg shadow-sm group-hover:scale-110 transition-transform">add_circle</span>
                         <span>Nouvelle Consultation</span>
-                    </button>
-                    <button class="w-full p-4 flex items-center gap-4 bg-surface-container-low text-secondary rounded-xl font-bold text-sm hover:bg-surface-container transition-colors group" type="button">
+                    </a>
+                    <a class="w-full p-4 flex items-center gap-4 bg-surface-container-low text-secondary rounded-xl font-bold text-sm hover:bg-surface-container transition-colors group" href="{% url 'doctor_schedule' %}">
                         <span class="material-symbols-outlined p-2 bg-white rounded-lg shadow-sm group-hover:scale-110 transition-transform">edit_note</span>
-                        <span>Rediger Ordonnance</span>
-                    </button>
-                    <button class="w-full p-4 flex items-center gap-4 bg-surface-container-low text-secondary rounded-xl font-bold text-sm hover:bg-surface-container transition-colors group" type="button">
+                        <span>Gerer les horaires</span>
+                    </a>
+                    <a class="w-full p-4 flex items-center gap-4 bg-surface-container-low text-secondary rounded-xl font-bold text-sm hover:bg-surface-container transition-colors group" href="{% url 'doctor_patient_list' %}">
                         <span class="material-symbols-outlined p-2 bg-white rounded-lg shadow-sm group-hover:scale-110 transition-transform">folder_shared</span>
-                        <span>Voir Dossier Medical</span>
-                    </button>
+                        <span>Voir mes patients</span>
+                    </a>
                 </div>
             </div>
 

@@ -1,0 +1,84 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Etablissement{% endblock %}
+
+{% block content %}
+<div class="p-10 space-y-8">
+    <section class="grid grid-cols-12 gap-8 items-start">
+        <div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl p-8">
+            <div class="space-y-3">
+                <div class="flex items-center space-x-3 flex-wrap">
+                    <h3 class="text-3xl font-extrabold text-on-surface tracking-tight">{{ etablissement.nom }}</h3>
+                    <span class="px-3 py-1 {% if etablissement.actif %}bg-secondary-container text-on-secondary-container{% else %}bg-error-container text-on-error-container{% endif %} text-[10px] font-bold uppercase rounded-full tracking-wider">
+                        {% if etablissement.actif %}Actif{% else %}Inactif{% endif %}
+                    </span>
+                </div>
+                <p class="text-on-surface-variant font-medium">{{ etablissement.type_display_name }}</p>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4">
+                    <div class="bg-surface-container-low px-4 py-3 rounded-lg">
+                        <p class="text-[10px] uppercase font-bold text-on-surface-variant opacity-60">Code</p>
+                        <p class="text-sm font-bold text-on-surface">{{ etablissement.code|default:"-" }}</p>
+                    </div>
+                    <div class="bg-surface-container-low px-4 py-3 rounded-lg">
+                        <p class="text-[10px] uppercase font-bold text-on-surface-variant opacity-60">Medecins lies</p>
+                        <p class="text-sm font-bold text-on-surface">{{ stats.doctors_count }}</p>
+                    </div>
+                    <div class="bg-surface-container-low px-4 py-3 rounded-lg">
+                        <p class="text-[10px] uppercase font-bold text-on-surface-variant opacity-60">Staff actif</p>
+                        <p class="text-sm font-bold text-on-surface">{{ stats.active_staff_count }}</p>
+                    </div>
+                    <div class="bg-surface-container-low px-4 py-3 rounded-lg">
+                        <p class="text-[10px] uppercase font-bold text-on-surface-variant opacity-60">RDV aujourd'hui</p>
+                        <p class="text-sm font-bold text-on-surface">{{ stats.appointments_today }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-12 lg:col-span-4 grid grid-cols-2 gap-4">
+            <div class="bg-surface-container-lowest p-6 rounded-xl flex flex-col justify-between h-32">
+                <span class="material-symbols-outlined text-primary">groups</span>
+                <div>
+                    <p class="text-lg font-black text-on-surface">{{ stats.patients_count }}</p>
+                    <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Patients</p>
+                </div>
+            </div>
+            <div class="bg-surface-container-lowest p-6 rounded-xl flex flex-col justify-between h-32">
+                <span class="material-symbols-outlined text-tertiary">person</span>
+                <div>
+                    <p class="text-lg font-black text-on-surface">{{ etablissement.admin_display_name|default:"-" }}</p>
+                    <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Admin</p>
+                </div>
+            </div>
+            <div class="col-span-2 bg-primary-container p-6 rounded-xl text-on-primary-fixed-variant">
+                <p class="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-1">Mis a jour le</p>
+                <p class="text-lg font-bold">{{ etablissement.updated_at|date:"M d, Y H:i" }}</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-12 gap-8">
+        <div class="col-span-12 lg:col-span-7 bg-surface-container-lowest rounded-xl p-8">
+            <h4 class="text-xl font-bold text-on-surface mb-6">Informations generales</h4>
+            <div class="space-y-4 text-sm">
+                <div><span class="text-on-surface-variant">Adresse:</span> <span class="font-semibold text-on-surface">{{ etablissement.adresse|default:"-" }}</span></div>
+                <div><span class="text-on-surface-variant">Ville:</span> <span class="font-semibold text-on-surface">{{ etablissement.ville|default:"-" }}</span></div>
+                <div><span class="text-on-surface-variant">Pays:</span> <span class="font-semibold text-on-surface">{{ etablissement.pays|default:"-" }}</span></div>
+                <div><span class="text-on-surface-variant">Telephone:</span> <span class="font-semibold text-on-surface">{{ etablissement.telephone|default:"-" }}</span></div>
+                <div><span class="text-on-surface-variant">Email:</span> <span class="font-semibold text-on-surface">{{ etablissement.email|default:"-" }}</span></div>
+                <div><span class="text-on-surface-variant">Site web:</span> <span class="font-semibold text-on-surface">{{ etablissement.site_web|default:"-" }}</span></div>
+                <div><span class="text-on-surface-variant">Description:</span> <span class="font-semibold text-on-surface">{{ etablissement.description|default:"-" }}</span></div>
+            </div>
+        </div>
+        <div class="col-span-12 lg:col-span-5 bg-surface-container-lowest rounded-xl p-8">
+            <h4 class="text-xl font-bold text-on-surface mb-6">Raccourcis</h4>
+            <div class="space-y-3">
+                <a class="block rounded-xl bg-surface-container-low px-4 py-4 font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'admin_etablissement_attendance' %}">Voir les presences</a>
+                <a class="block rounded-xl bg-surface-container-low px-4 py-4 font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'admin_etablissement_patient_list' %}">Voir les patients</a>
+                <a class="block rounded-xl bg-surface-container-low px-4 py-4 font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'admin_etablissement_appointment_list' %}">Voir les rendez-vous</a>
+                <a class="block rounded-xl bg-surface-container-low px-4 py-4 font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'admin_etablissement_availability' %}">Voir les medecins lies</a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

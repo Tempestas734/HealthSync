@@ -297,6 +297,9 @@ class PersonnelEtablissement(models.Model):
         ("infirmier", "Infirmier"),
         ("secretaire", "Secretaire"),
         ("assistant", "Assistant"),
+        ("receptionniste", "Receptionniste"),
+        ("technicien", "Technicien"),
+        ("staff_frontdesk", "Staff Frontdesk"),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
@@ -330,6 +333,26 @@ class PersonnelEtablissement(models.Model):
     @property
     def role_display_name(self):
         return dict(self.ROLE_CHOICES).get(self.role, self.role)
+
+
+class PersonnelEtablissementPermission(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    personnel_etablissement = models.OneToOneField(
+        PersonnelEtablissement,
+        on_delete=models.CASCADE,
+        db_column="personnel_etablissement_id",
+        related_name="permissions",
+    )
+    can_manage_patients = models.BooleanField(default=False)
+    can_manage_appointments = models.BooleanField(default=False)
+    can_declare_presences = models.BooleanField(default=False)
+    can_view_documents = models.BooleanField(default=False)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = "personnel_etablissement_permissions"
 
 
 class MedecinPresence(models.Model):
@@ -524,7 +547,7 @@ class Patient(models.Model):
         db_column="etablissement_id",
         related_name="patients",
     )
-    patient_code = models.TextField(unique=True)
+    patient_code = models.TextField(null=True, blank=True)
     barcode_value = models.TextField(unique=True)
     first_name = models.TextField()
     last_name = models.TextField()
@@ -547,3 +570,145 @@ class Patient(models.Model):
     @property
     def full_name(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip()
+
+
+class PatientVitalSign(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        db_column="patient_id",
+        related_name="vital_signs",
+    )
+    etablissement = models.ForeignKey(
+        Etablissement,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column="etablissement_id",
+        related_name="patient_vital_signs",
+    )
+    exam_session_id = models.UUIDField(null=True, blank=True)
+    measured_by_user = models.ForeignKey(
+        AppUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column="measured_by_user_id",
+        related_name="measured_patient_vital_signs",
+    )
+    temperature_c = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    heart_rate_bpm = models.IntegerField(null=True, blank=True)
+    spo2_percent = models.IntegerField(null=True, blank=True)
+    systolic_bp = models.IntegerField(null=True, blank=True)
+    diastolic_bp = models.IntegerField(null=True, blank=True)
+    respiratory_rate_bpm = models.IntegerField(null=True, blank=True)
+    weight_kg = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    height_cm = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    blood_glucose_mg_dl = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    measurement_source = models.TextField(default="kiosk")
+    notes = models.TextField(null=True, blank=True)
+    measured_at = models.DateTimeField()
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = "patient_vital_signs"
+        ordering = ("-measured_at", "-created_at")
+
+    @property
+    def blood_pressure_display(self):
+        if self.systolic_bp is None and self.diastolic_bp is None:
+            return None
+        return f"{self.systolic_bp or '-'} / {self.diastolic_bp or '-'} mmHg"
+
+
+class Appointment(models.Model):
+    STATUS_CHOICES = (
+        ("pending", "En attente"),
+        ("confirmed", "Confirme"),
+        ("cancelled", "Annule"),
+        ("completed", "Termine"),
+        ("no_show", "Absent"),
+        ("follow_up_planned", "Suivi planifie"),
+    )
+
+    SOURCE_CHOICES = (
+        ("mobile_app", "Application mobile"),
+        ("web_portal", "Portail web"),
+        ("hospital_desk", "Accueil etablissement"),
+    )
+
+    REQUESTED_BY_TYPE_CHOICES = (
+        ("family", "Famille"),
+        ("patient", "Patient"),
+        ("doctor", "Medecin"),
+        ("secretary", "Secretaire"),
+        ("nurse", "Infirmier"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        db_column="patient_id",
+        related_name="appointments",
+    )
+    medecin = models.ForeignKey(
+        Medecin,
+        on_delete=models.CASCADE,
+        db_column="medecin_id",
+        related_name="appointments",
+    )
+    etablissement = models.ForeignKey(
+        Etablissement,
+        on_delete=models.CASCADE,
+        db_column="etablissement_id",
+        related_name="appointments",
+    )
+    scheduled_at = models.DateTimeField()
+    status = models.TextField(default="pending")
+    reason = models.TextField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    created_by_user = models.ForeignKey(
+        AppUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column="created_by_user_id",
+        related_name="created_appointments",
+    )
+    requested_by_type = models.TextField(null=True, blank=True)
+    requested_by_id = models.UUIDField(null=True, blank=True)
+    source = models.TextField(default="web_portal")
+    follow_up_of_appointment = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column="follow_up_of_appointment_id",
+        related_name="follow_up_appointments",
+    )
+    cancelled_by_user = models.ForeignKey(
+        AppUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column="cancelled_by_user_id",
+        related_name="cancelled_appointments",
+    )
+    cancel_reason = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+    duration_minutes = models.IntegerField(default=15)
+    scheduled_end_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = "appointments"
+        ordering = ("scheduled_at", "created_at")
+
+    @property
+    def status_display_name(self):
+        return dict(self.STATUS_CHOICES).get(self.status, self.status)

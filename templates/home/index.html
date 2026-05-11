@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>HealthSync | Clinical Operations Platform</title>
+    <title>HealthSync | Plateforme d'opérations cliniques</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
@@ -46,14 +46,14 @@
                 <div class="flex items-center gap-8">
                     <a class="text-2xl font-extrabold tracking-[-0.04em] text-slate-900" href="{% url 'home' %}">HealthSync</a>
                     <div class="hidden items-center gap-6 text-sm font-semibold text-slate-500 md:flex">
-                        <span>Doctors</span>
-                        <span>Facilities</span>
-                        <span>Care Teams</span>
+                        <span>Médecins</span>
+                        <span>Établissements</span>
+                        <span>Équipes soignantes</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
                     <a class="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-primary" href="{% url 'login' %}">Connexion</a>
-                    <a class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-soft transition duration-200 hover:-translate-y-0.5 hover:brightness-110" href="{% url 'login' %}">Creer un account</a>
+                    <a class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-soft transition duration-200 hover:-translate-y-0.5 hover:brightness-110" href="{% url 'login' %}">Créer un compte</a>
                 </div>
             </nav>
         </header>
@@ -65,17 +65,12 @@
             <section class="relative z-10 mx-auto flex h-full w-full max-w-7xl flex-1 items-center px-6">
                 <div class="grid w-full items-center gap-8 xl:grid-cols-[1.1fr_0.9fr]">
                     <div class="max-w-3xl">
-                        <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/70 px-4 py-2 text-primary shadow-soft backdrop-blur">
-                            <span class="material-symbols-outlined text-base">verified_user</span>
-                            <span class="text-[11px] font-extrabold uppercase tracking-[0.28em]">Unified Clinical Operations</span>
-                        </div>
-
-                        <h1 class="max-w-4xl font-headline text-4xl font-extrabold leading-[1.02] tracking-[-0.05em] text-slate-950 md:text-5xl xl:text-6xl">
-                            One secure platform for doctors, staff and healthcare facilities.
+                        <h1 class="max-w-3xl font-headline text-4xl font-extrabold leading-[1.02] tracking-[-0.05em] text-slate-950 md:text-5xl xl:text-6xl">
+                            Une plateforme sécurisée pour les médecins, le personnel et les établissements de santé.
                         </h1>
 
                         <p class="mt-5 max-w-2xl text-base leading-7 text-slate-500 md:text-lg">
-                            HealthSync helps healthcare organizations coordinate teams, manage facilities and keep daily operations clear, fast and organized.
+                            HealthSync aide les structures de santé à coordonner les équipes, gérer les établissements et garder les opérations quotidiennes claires, rapides et organisées.
                         </p>
 
                         <div class="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -83,7 +78,7 @@
                                 Connexion
                             </a>
                             <a class="inline-flex items-center justify-center rounded-2xl bg-primary px-7 py-3.5 text-base font-bold text-white shadow-hero transition duration-200 hover:-translate-y-0.5 hover:brightness-110" href="{% url 'login' %}">
-                                Creer un account
+                                Créer un compte
                             </a>
                         </div>
 
@@ -93,8 +88,8 @@
                         <div class="hero-panel rounded-[2rem] border border-white/70 bg-white/80 p-5 shadow-hero backdrop-blur">
                             <div class="mb-5 flex items-start justify-between">
                                 <div>
-                                    <div class="text-xs font-extrabold uppercase tracking-[0.24em] text-sky-600">Operations Snapshot</div>
-                                    <div class="mt-2 text-2xl font-extrabold tracking-[-0.04em] text-slate-900">Clinical Control Center</div>
+                                    <div class="text-xs font-extrabold uppercase tracking-[0.24em] text-sky-600">Aperçu des opérations</div>
+                                    <div class="mt-2 text-2xl font-extrabold tracking-[-0.04em] text-slate-900">Centre de contrôle clinique</div>
                                 </div>
                                 <div class="rounded-2xl bg-panel p-3 text-primary">
                                     <span class="material-symbols-outlined">monitor_heart</span>
@@ -104,8 +99,8 @@
                             <div class="grid gap-3">
                                 <div class="rounded-2xl bg-panel p-4">
                                     <div class="flex items-center justify-between text-sm font-semibold text-slate-500">
-                                        <span>Team activity</span>
-                                        <span class="rounded-full bg-white px-3 py-1 text-xs text-primary">Live</span>
+                                        <span>Activité de l'équipe</span>
+                                        <span class="rounded-full bg-white px-3 py-1 text-xs text-primary">En direct</span>
                                     </div>
                                     <div class="mt-3 flex h-20 items-end gap-2">
                                         <div class="h-[42%] flex-1 rounded-t-xl bg-sky-100"></div>
@@ -118,14 +113,14 @@
 
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="rounded-2xl border border-sky-100 bg-white p-4 shadow-soft">
-                                        <div class="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Doctors</div>
+                                        <div class="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Médecins</div>
                                         <div class="mt-2 text-3xl font-extrabold tracking-[-0.04em] text-slate-900">24</div>
-                                        <div class="mt-1 text-sm text-slate-500">Profiles supervised</div>
+                                        <div class="mt-1 text-sm text-slate-500">Profils suivis</div>
                                     </div>
                                     <div class="rounded-2xl border border-orange-100 bg-orange-50 p-4 shadow-soft">
-                                        <div class="text-xs font-bold uppercase tracking-[0.24em] text-orange-400">Facilities</div>
+                                        <div class="text-xs font-bold uppercase tracking-[0.24em] text-orange-400">Établissements</div>
                                         <div class="mt-2 text-3xl font-extrabold tracking-[-0.04em] text-slate-900">08</div>
-                                        <div class="mt-1 text-sm text-slate-500">Locations tracked</div>
+                                        <div class="mt-1 text-sm text-slate-500">Sites suivis</div>
                                     </div>
                                 </div>
 
@@ -135,8 +130,8 @@
                                             <span class="material-symbols-outlined text-sky-300">shield_locked</span>
                                         </div>
                                         <div>
-                                            <div class="text-sm font-bold">Reliable operations</div>
-                                            <div class="text-sm text-slate-300">A clean workspace for daily medical coordination and structured follow-up.</div>
+                                            <div class="text-sm font-bold">Opérations fiables</div>
+                                            <div class="text-sm text-slate-300">Un espace clair pour la coordination médicale quotidienne et un suivi structuré.</div>
                                         </div>
                                     </div>
                                 </div>
@@ -157,18 +152,18 @@
                             </div>
                             <div>
                                 <div class="text-sm font-extrabold tracking-[-0.03em] text-slate-900">HealthSync</div>
-                                <div class="text-xs text-slate-500">Clinical management experience</div>
+                                <div class="text-xs text-slate-500">Expérience de gestion clinique</div>
                             </div>
                         </div>
                         <div class="hidden items-center gap-8 md:flex">
-                            <a class="transition-colors hover:text-primary" href="{% url 'home' %}">Home</a>
+                            <a class="transition-colors hover:text-primary" href="{% url 'home' %}">Accueil</a>
                             <a class="transition-colors hover:text-primary" href="{% url 'login' %}">Connexion</a>
                             <span>Support</span>
-                            <span>Privacy</span>
+                            <span>Confidentialité</span>
                         </div>
                         <div class="text-right">
-                            <div class="font-semibold text-slate-700">Healthcare operations platform.</div>
-                            <div class="text-xs text-slate-400">Secure. Structured. Ready.</div>
+                            <div class="font-semibold text-slate-700">Plateforme d'opérations de santé.</div>
+                            <div class="text-xs text-slate-400">Sécurisée. Structurée. Prête.</div>
                         </div>
                     </div>
                 </div>

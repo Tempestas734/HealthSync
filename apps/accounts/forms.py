@@ -1,5 +1,6 @@
 import re
 import unicodedata
+import uuid
 from datetime import datetime
 
 from django import forms
@@ -7,6 +8,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from .models import (
+    Appointment,
     AppUser,
     ETABLISSEMENT_TYPE_LABELS,
     Etablissement,
@@ -15,6 +17,7 @@ from .models import (
     MedecinIndisponibilite,
     MedecinPresence,
     Patient,
+    PersonnelEtablissementPermission,
     Role,
 )
 
@@ -221,6 +224,38 @@ class AppUserForm(forms.ModelForm):
         if self.require_password and not password:
             raise forms.ValidationError("Password is required when creating a user.")
         return password
+
+
+class PersonnelEtablissementPermissionForm(forms.ModelForm):
+    class Meta:
+        model = PersonnelEtablissementPermission
+        fields = [
+            "can_manage_patients",
+            "can_manage_appointments",
+            "can_declare_presences",
+            "can_view_documents",
+        ]
+        widgets = {
+            "can_manage_patients": forms.CheckboxInput(
+                attrs={"class": "h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary/20"}
+            ),
+            "can_manage_appointments": forms.CheckboxInput(
+                attrs={"class": "h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary/20"}
+            ),
+            "can_declare_presences": forms.CheckboxInput(
+                attrs={"class": "h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary/20"}
+            ),
+            "can_view_documents": forms.CheckboxInput(
+                attrs={"class": "h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary/20"}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["can_manage_patients"].label = "Gerer les patients"
+        self.fields["can_manage_appointments"].label = "Gerer les rendez-vous"
+        self.fields["can_declare_presences"].label = "Declarer les presences"
+        self.fields["can_view_documents"].label = "Voir les documents"
 
 
 class EtablissementForm(forms.ModelForm):
@@ -519,6 +554,111 @@ class MedecinForm(forms.ModelForm):
 
         cleaned_data["langues_input"] = merged_languages
         return cleaned_data
+
+
+class RoleForm(forms.ModelForm):
+    class Meta:
+        model = Role
+        fields = [
+            "code",
+            "nom",
+            "description",
+        ]
+        widgets = {
+            "code": forms.TextInput(
+                attrs={
+                    "class": "mt-2 w-full rounded-xl border-0 bg-surface-container-low px-4 py-3 focus:ring-2 focus:ring-primary/20",
+                    "placeholder": "super_admin",
+                }
+            ),
+            "nom": forms.TextInput(
+                attrs={
+                    "class": "mt-2 w-full rounded-xl border-0 bg-surface-container-low px-4 py-3 focus:ring-2 focus:ring-primary/20",
+                    "placeholder": "Super Admin",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "mt-2 w-full rounded-xl border-0 bg-surface-container-lowest px-4 py-3 focus:ring-2 focus:ring-primary/20",
+                    "rows": 4,
+                    "placeholder": "Description du role",
+                }
+            ),
+        }
+
+    def clean_code(self):
+        code = re.sub(r"[^a-z0-9_]+", "_", (self.cleaned_data.get("code") or "").strip().lower()).strip("_")
+        if not code:
+            raise forms.ValidationError("Le code du role est obligatoire.")
+
+        qs = Role.objects.filter(code__iexact=code)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Un role avec ce code existe deja.")
+        return code
+
+    def clean_nom(self):
+        nom = (self.cleaned_data.get("nom") or "").strip()
+        if not nom:
+            raise forms.ValidationError("Le nom du role est obligatoire.")
+        return nom
+
+
+class UserPasswordResetForm(forms.Form):
+    password = forms.CharField(
+        min_length=8,
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "mt-2 w-full rounded-xl border-0 bg-surface-container-low px-4 py-3 focus:ring-2 focus:ring-primary/20",
+                "placeholder": "Nouveau mot de passe temporaire",
+            }
+        ),
+        help_text="L'utilisateur devra le changer a la prochaine connexion.",
+        label="Mot de passe temporaire",
+    )
+
+
+class DoctorAccountLinkForm(forms.Form):
+    user = forms.ModelChoiceField(
+        queryset=AppUser.objects.none(),
+        required=True,
+        widget=forms.Select(
+            attrs={
+                "class": "mt-2 w-full rounded-xl border-0 bg-surface-container-low px-4 py-3 focus:ring-2 focus:ring-primary/20",
+            }
+        ),
+        label="Compte utilisateur",
+        empty_label="Choisir un compte medecin",
+    )
+
+    def __init__(self, *args, doctor=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.doctor = doctor
+        doctor_role_filter = (
+            Q(role__code__iexact="medecin")
+            | Q(role__code__iexact="doctor")
+            | Q(role__nom__iexact="medecin")
+            | Q(role__nom__iexact="doctor")
+        )
+        linked_user_ids = Medecin.objects.exclude(user__isnull=True)
+        if doctor and doctor.user_id:
+            linked_user_ids = linked_user_ids.exclude(user_id=doctor.user_id)
+        linked_user_ids = linked_user_ids.values_list("user_id", flat=True)
+
+        queryset = (
+            AppUser.objects.select_related("role")
+            .filter(doctor_role_filter)
+            .exclude(pk__in=linked_user_ids)
+            .order_by("first_name", "last_name", "email")
+        )
+        if doctor and doctor.user_id:
+            queryset = AppUser.objects.select_related("role").filter(pk=doctor.user_id) | queryset
+
+        self.fields["user"].queryset = queryset.distinct()
+        self.fields["user"].label_from_instance = lambda user: (
+            f"{((user.first_name or '') + ' ' + (user.last_name or '')).strip() or user.email} ({user.email or user.id})"
+        )
 
 
 class PasswordSetupForm(forms.Form):
@@ -835,6 +975,7 @@ class PatientForm(forms.ModelForm):
             "phone",
             "email",
             "address",
+            "patient_code",
             "blood_group",
             "emergency_contact_name",
             "emergency_contact_phone",
@@ -878,6 +1019,12 @@ class PatientForm(forms.ModelForm):
                     "rows": 4,
                 }
             ),
+            "patient_code": forms.TextInput(
+                attrs={
+                    "class": "w-full bg-white border-none rounded-xl py-4 px-5 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-medium uppercase tracking-wide",
+                    "placeholder": "CIN / Carte nationale",
+                }
+            ),
             "emergency_contact_name": forms.TextInput(
                 attrs={
                     "class": "w-full bg-white border-none rounded-xl py-4 px-5 text-sm focus:ring-2 focus:ring-primary/20 transition-all font-medium",
@@ -908,34 +1055,15 @@ class PatientForm(forms.ModelForm):
         self.fields["phone"].label = "Telephone"
         self.fields["email"].label = "E-mail"
         self.fields["address"].label = "Adresse complete"
+        self.fields["patient_code"].label = "CIN / Carte nationale"
         self.fields["blood_group"].label = "Groupe sanguin"
         self.fields["emergency_contact_name"].label = "Nom du contact"
         self.fields["emergency_contact_phone"].label = "Telephone d'urgence"
         self.fields["first_name"].required = True
         self.fields["last_name"].required = True
 
-    def _build_patient_prefix(self):
-        city_part = _slug_code_part(getattr(self.etablissement, "ville", None), "PAT")
-        return f"PAT-{city_part}"
-
-    def generate_patient_code(self):
-        prefix = self._build_patient_prefix()
-        existing_codes = Patient.objects.filter(patient_code__istartswith=f"{prefix}-")
-        if self.instance.pk:
-            existing_codes = existing_codes.exclude(pk=self.instance.pk)
-
-        highest_sequence = 0
-        pattern = re.compile(rf"^{re.escape(prefix)}-(\d{{4}})$", re.IGNORECASE)
-        for existing_code in existing_codes.values_list("patient_code", flat=True):
-            if not existing_code:
-                continue
-            match = pattern.match(existing_code.strip())
-            if match:
-                highest_sequence = max(highest_sequence, int(match.group(1)))
-        return f"{prefix}-{highest_sequence + 1:04d}"
-
-    def generate_barcode_value(self, patient_code):
-        return f"BC-{patient_code}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+    def generate_barcode_value(self):
+        return f"BC-{timezone.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:8].upper()}"
 
     def clean_email(self):
         email = (self.cleaned_data.get("email") or "").strip().lower()
@@ -944,6 +1072,18 @@ class PatientForm(forms.ModelForm):
     def clean_phone(self):
         phone = (self.cleaned_data.get("phone") or "").strip()
         return phone or None
+
+    def clean_patient_code(self):
+        patient_code = (self.cleaned_data.get("patient_code") or "").strip().upper()
+        if not patient_code:
+            return None
+
+        qs = Patient.objects.filter(patient_code__iexact=patient_code)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Ce CIN / code patient existe deja.")
+        return patient_code
 
     def clean_gender(self):
         gender = (self.cleaned_data.get("gender") or "").strip()
@@ -958,7 +1098,105 @@ class PatientForm(forms.ModelForm):
         if not self.etablissement:
             raise forms.ValidationError("Aucun etablissement actif n'est associe a ce compte.")
 
-        patient_code = self.generate_patient_code()
-        cleaned_data["generated_patient_code"] = patient_code
-        cleaned_data["generated_barcode_value"] = self.generate_barcode_value(patient_code)
+        cleaned_data["generated_barcode_value"] = self.generate_barcode_value()
         return cleaned_data
+
+
+class StaffAppointmentForm(forms.ModelForm):
+    patient_code = forms.CharField(
+        label="CIN / Code patient / Barcode",
+        max_length=64,
+        widget=forms.TextInput(
+            attrs={
+                "class": "w-full rounded-xl border-none bg-surface-container-low px-5 py-4 text-sm font-medium uppercase tracking-wide focus:ring-2 focus:ring-primary/20",
+                "placeholder": "Ex: CIN123456 ou BC-...",
+            }
+        ),
+    )
+
+    class Meta:
+        model = Appointment
+        fields = [
+            "patient_code",
+            "medecin",
+            "scheduled_at",
+            "duration_minutes",
+            "reason",
+            "notes",
+        ]
+        widgets = {
+            "medecin": forms.Select(
+                attrs={
+                    "class": "w-full rounded-xl border-none bg-surface-container-low px-5 py-4 text-sm font-medium focus:ring-2 focus:ring-primary/20",
+                }
+            ),
+            "scheduled_at": forms.DateTimeInput(
+                attrs={
+                    "class": "w-full rounded-xl border-none bg-surface-container-low px-5 py-4 text-sm font-medium focus:ring-2 focus:ring-primary/20",
+                    "type": "datetime-local",
+                }
+            ),
+            "duration_minutes": forms.NumberInput(
+                attrs={
+                    "class": "w-full rounded-xl border-none bg-surface-container-low px-5 py-4 text-sm font-medium focus:ring-2 focus:ring-primary/20",
+                    "min": "5",
+                    "step": "5",
+                }
+            ),
+            "reason": forms.TextInput(
+                attrs={
+                    "class": "w-full rounded-xl border-none bg-surface-container-low px-5 py-4 text-sm font-medium focus:ring-2 focus:ring-primary/20",
+                    "placeholder": "Motif du rendez-vous",
+                }
+            ),
+            "notes": forms.Textarea(
+                attrs={
+                    "class": "w-full rounded-xl border-none bg-surface-container-low px-5 py-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 min-h-[120px] resize-none",
+                    "placeholder": "Notes internes",
+                    "rows": 4,
+                }
+            ),
+        }
+
+    def __init__(self, *args, etablissement=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.etablissement = etablissement
+        self.patient_instance = None
+        self.fields["medecin"].queryset = Medecin.objects.none()
+        self.fields["duration_minutes"].initial = 15
+        self.fields["scheduled_at"].input_formats = ["%Y-%m-%dT%H:%M"]
+
+        if etablissement:
+            self.fields["medecin"].queryset = Medecin.objects.filter(
+                facility_links__etablissement=etablissement,
+                facility_links__actif=True,
+            ).select_related("user").distinct().order_by("user__first_name", "user__last_name")
+
+        self.fields["medecin"].label_from_instance = lambda doctor: (
+            f"{doctor.full_name or doctor.email or doctor.id} - {doctor.specialite or 'Sans specialite'}"
+        )
+
+    def clean_patient_code(self):
+        patient_code = (self.cleaned_data.get("patient_code") or "").strip().upper()
+        if not patient_code:
+            raise forms.ValidationError("Le code patient est requis.")
+        if not self.etablissement:
+            raise forms.ValidationError("Aucun etablissement actif.")
+
+        patient = Patient.objects.filter(
+            etablissement=self.etablissement,
+            is_active=True,
+        ).filter(
+            Q(patient_code__iexact=patient_code) | Q(barcode_value__iexact=patient_code)
+        ).first()
+        if not patient:
+            raise forms.ValidationError("Aucun patient actif ne correspond a ce code ou barcode.")
+
+        self.patient_instance = patient
+        return patient_code
+
+    def clean_duration_minutes(self):
+        duration = self.cleaned_data.get("duration_minutes")
+        if duration is None or duration <= 0:
+            raise forms.ValidationError("La duree doit etre superieure a 0.")
+        return duration

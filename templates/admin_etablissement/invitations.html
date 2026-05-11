@@ -111,16 +111,18 @@
 
             <div class="space-y-4">
                 <div class="grid grid-cols-12 px-6 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                    <div class="col-span-4">Praticien</div>
+                    <div class="col-span-3">Praticien</div>
                     <div class="col-span-2">Role</div>
+                    <div class="col-span-2">Droits</div>
                     <div class="col-span-2">Date d'envoi</div>
-                    <div class="col-span-2">PIN expire</div>
-                    <div class="col-span-2">Statut</div>
+                    <div class="col-span-1">PIN</div>
+                    <div class="col-span-1">Statut</div>
+                    <div class="col-span-1 text-right">Action</div>
                 </div>
 
                 {% for invitation in invitations %}
                 <div class="grid grid-cols-12 items-center px-6 py-4 bg-surface-container-lowest rounded-xl hover:bg-white transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)] {% if invitation.status == 'expired' or invitation.status == 'cancelled' %}opacity-70{% endif %}">
-                    <div class="col-span-4 flex items-center space-x-3">
+                    <div class="col-span-3 flex items-center space-x-3">
                         <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-primary font-bold">
                             {{ invitation.doctor_display_name|slice:":1"|upper }}
                         </div>
@@ -132,11 +134,23 @@
                     <div class="col-span-2">
                         <span class="text-sm font-medium px-3 py-1 bg-surface-container rounded-full">{{ invitation.role_display_name }}</span>
                     </div>
+                    <div class="col-span-2">
+                        <div class="space-y-2">
+                            <div class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold {% if invitation.can_issue_prescriptions %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                                <span class="h-2 w-2 rounded-full {% if invitation.can_issue_prescriptions %}bg-emerald-500{% else %}bg-slate-400{% endif %}"></span>
+                                Prescription
+                            </div>
+                            <div class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold {% if invitation.can_sign_documents %}bg-blue-50 text-blue-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                                <span class="h-2 w-2 rounded-full {% if invitation.can_sign_documents %}bg-blue-500{% else %}bg-slate-400{% endif %}"></span>
+                                Signature
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-span-2 text-sm text-secondary">{{ invitation.created_at|date:"d M Y, H:i" }}</div>
-                    <div class="col-span-2 text-sm text-secondary">
+                    <div class="col-span-1 text-sm text-secondary">
                         {% if invitation.pin_expires_at %}{{ invitation.pin_expires_at|date:"d M Y, H:i" }}{% else %}-{% endif %}
                     </div>
-                    <div class="col-span-2">
+                    <div class="col-span-1">
                         <div class="flex items-center space-x-2 text-xs font-bold
                             {% if invitation.status == 'pending' %}text-tertiary
                             {% elif invitation.status == 'accepted' %}text-emerald-600
@@ -149,6 +163,18 @@
                             {% endif %}
                             <span>{{ invitation.status_display_name|upper }}</span>
                         </div>
+                    </div>
+                    <div class="col-span-1 flex justify-end">
+                        {% if invitation.status == "pending" %}
+                        <form action="{% url 'admin_etablissement_invitation_cancel' invitation.id %}" method="post" onsubmit="return confirm('Annuler cette invitation ?');">
+                            {% csrf_token %}
+                            <button class="rounded-xl bg-error-container px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-error transition hover:opacity-90" type="submit">
+                                Annuler
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="text-[11px] font-semibold text-slate-400">-</span>
+                        {% endif %}
                     </div>
                 </div>
                 {% empty %}

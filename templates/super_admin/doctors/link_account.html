@@ -1,0 +1,36 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Lier un compte medecin{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8">
+    <div class="max-w-3xl bg-surface-container-lowest rounded-2xl p-8 shadow-sm">
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-on-surface">Lier un compte utilisateur</h3>
+            <p class="text-sm text-on-surface-variant mt-1">{{ doctor.full_name }}{% if doctor.user %} · Compte actuel: {{ doctor.user.email }}{% endif %}</p>
+        </div>
+
+        <form class="space-y-6" method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <label class="block">
+                <span class="text-sm font-semibold text-on-surface">{{ form.user.label }}</span>
+                {{ form.user }}
+                {% if form.user.errors %}<p class="mt-2 text-xs text-error">{{ form.user.errors.0 }}</p>{% endif %}
+            </label>
+
+            <div class="rounded-xl bg-surface-container-low px-4 py-4 text-sm text-on-surface-variant">
+                Seuls les comptes de role medecin non deja lies a un autre profil sont proposes.
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
+                <a class="px-4 py-2 rounded-xl bg-surface-container-high text-on-surface font-semibold text-sm" href="{% url 'super_admin_doctor_detail' doctor.id %}">Annuler</a>
+                <button class="px-5 py-2 rounded-xl bg-primary text-on-primary font-semibold text-sm shadow-lg shadow-primary/10" type="submit">Lier</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

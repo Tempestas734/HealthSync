@@ -1,0 +1,218 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}HealthSync - Staff Appointments Calendar{% endblock %}
+
+{% block extra_head %}
+<link href="{% static 'css/staff_appointments.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<section class="flex flex-1 gap-8 p-8">
+    <div class="flex w-72 flex-col gap-8">
+        <div class="rounded-xl bg-surface-container-lowest p-6 shadow-sm">
+            <div class="mb-6 flex items-center justify-between">
+                <h3 class="headline-font font-bold text-on-surface">{{ month_calendar.label }}</h3>
+                <div class="flex gap-1">
+                    <a class="rounded p-1 text-secondary transition-colors hover:bg-surface-container" href="?week={{ previous_week }}">
+                        <span class="material-symbols-outlined text-sm">chevron_left</span>
+                    </a>
+                    <a class="rounded p-1 text-secondary transition-colors hover:bg-surface-container" href="?week={{ next_week }}">
+                        <span class="material-symbols-outlined text-sm">chevron_right</span>
+                    </a>
+                </div>
+            </div>
+            <div class="grid grid-cols-7 gap-y-3 text-center">
+                {% for label in month_calendar.weekday_labels %}
+                <span class="text-[10px] font-bold uppercase tracking-tighter text-secondary">{{ label|slice:":1" }}</span>
+                {% endfor %}
+                {% for week in month_calendar.weeks %}
+                    {% for day in week %}
+                    <a class="relative rounded-full py-1 text-xs transition-colors {% if day.is_today %}bg-primary text-white font-bold{% elif day.is_selected_week %}bg-primary-fixed text-primary font-bold{% elif not day.is_current_month %}text-slate-300{% else %}text-on-surface hover:bg-primary-container hover:text-white{% endif %}" href="?week={{ day.iso }}">
+                        {{ day.day_number }}
+                        {% if day.has_appointment %}
+                        <span class="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-emerald-500"></span>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="rounded-xl bg-surface-container-lowest p-6 shadow-sm">
+            <h4 class="mb-4 text-sm font-bold uppercase tracking-widest text-on-surface">Medical Team</h4>
+            <div class="space-y-4">
+                {% for row in doctor_filter_rows %}
+                <label class="flex items-center gap-3">
+                    <input checked class="doctor-filter h-4 w-4 rounded border-slate-200 text-primary focus:ring-primary" data-doctor-id="{{ row.doctor.id }}" type="checkbox"/>
+                    <div class="flex-1">
+                        <p class="text-xs font-semibold">{{ row.doctor.full_name|default:row.doctor.email }}</p>
+                        <p class="text-[10px] text-secondary">{{ row.doctor.specialite|default:"Sans specialite" }}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold text-secondary">{{ row.weekly_count }}</span>
+                        <span class="h-2 w-2 rounded-full {{ row.color_class }}"></span>
+                    </div>
+                </label>
+                {% empty %}
+                <div class="text-sm text-on-surface-variant">Aucun medecin actif pour cet etablissement.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="rounded-xl bg-surface-container-lowest p-6 shadow-sm">
+            <div class="mb-5 flex items-center justify-between">
+                <div>
+                    <h3 class="headline-font text-lg font-extrabold text-primary">Quick Appointment Booking</h3>
+                    <p class="mt-1 text-xs text-on-surface-variant">Creation rapide via code patient.</p>
+                </div>
+            </div>
+            <form class="space-y-4" method="post">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div>
+                    <label class="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Code Patient / Barcode</label>
+                    {{ form.patient_code }}
+                    {% if form.patient_code.errors %}<p class="mt-1 text-xs text-error">{{ form.patient_code.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Assigned Doctor</label>
+                    {{ form.medecin }}
+                    {% if form.medecin.errors %}<p class="mt-1 text-xs text-error">{{ form.medecin.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Date & Time</label>
+                        {{ form.scheduled_at }}
+                        {% if form.scheduled_at.errors %}<p class="mt-1 text-xs text-error">{{ form.scheduled_at.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Duration</label>
+                        {{ form.duration_minutes }}
+                        {% if form.duration_minutes.errors %}<p class="mt-1 text-xs text-error">{{ form.duration_minutes.errors.0 }}</p>{% endif %}
+                    </div>
+                </div>
+                <div>
+                    <label class="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Reason</label>
+                    {{ form.reason }}
+                    {% if form.reason.errors %}<p class="mt-1 text-xs text-error">{{ form.reason.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="mb-2 ml-1 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Notes</label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}<p class="mt-1 text-xs text-error">{{ form.notes.errors.0 }}</p>{% endif %}
+                </div>
+                <button class="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-primary to-primary-container px-6 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition-all hover:scale-[1.01]" type="submit">
+                    <span class="material-symbols-outlined text-sm">add</span>
+                    New Appointment
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-100 bg-surface-container-lowest shadow-sm">
+        <div class="flex items-center justify-between border-b border-slate-50 px-8 py-6">
+            <div class="flex items-center gap-8">
+                <div class="flex items-center gap-2">
+                    <h2 class="headline-font text-2xl font-extrabold text-blue-900">{{ week_start|date:"F d" }} - {{ week_end|date:"d, Y" }}</h2>
+                    <span class="rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold uppercase text-on-secondary-container">Week</span>
+                </div>
+                <div class="flex rounded-lg bg-surface-container-low p-1">
+                    <button class="rounded-md px-4 py-1.5 text-xs font-bold text-secondary transition-all hover:text-primary" type="button">Day</button>
+                    <button class="rounded-md bg-white px-4 py-1.5 text-xs font-bold text-primary shadow-sm" type="button">Week</button>
+                    <button class="rounded-md px-4 py-1.5 text-xs font-bold text-secondary transition-all hover:text-primary" type="button">Month</button>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <a class="rounded-full border border-outline-variant px-4 py-2 text-xs font-bold text-secondary transition-colors hover:bg-surface-container-low" href="?week={{ today_week }}">Today</a>
+                <div class="mr-4 flex gap-1">
+                    <a class="rounded-full p-2 text-secondary transition-colors hover:bg-slate-100" href="?week={{ previous_week }}"><span class="material-symbols-outlined">chevron_left</span></a>
+                    <a class="rounded-full p-2 text-secondary transition-colors hover:bg-slate-100" href="?week={{ next_week }}"><span class="material-symbols-outlined">chevron_right</span></a>
+                </div>
+                <a class="flex items-center gap-2 rounded-full bg-slate-900 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-slate-800" href="{% url 'staff_appointments' %}">
+                    <span class="material-symbols-outlined text-sm">calendar_month</span>
+                    Full List
+                </a>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+            <div class="calendar-grid sticky top-0 z-10 border-b border-slate-100 bg-white">
+                <div class="py-4 text-center text-[10px] font-black uppercase tracking-widest text-slate-300">Time</div>
+                {% for day in week_days %}
+                <div class="border-l border-slate-50 px-4 py-4 text-center {% if day.is_today %}bg-blue-50/30{% endif %}">
+                    <p class="mb-1 text-[10px] font-bold uppercase tracking-widest {% if day.is_today %}text-primary{% else %}text-secondary{% endif %}">{{ day.weekday_short }}</p>
+                    <p class="headline-font text-xl font-bold {% if day.is_today %}text-primary{% else %}text-on-surface{% endif %}">{{ day.day_number }}</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="relative" id="appointments-calendar-grid" data-week-start="{{ week_start|date:'Y-m-d' }}">
+                <div class="calendar-grid relative">
+                    <div class="calendar-column-lines pointer-events-none absolute inset-0">
+                        {% for day in week_days %}
+                        <div class="h-full border-l border-slate-50 {% if day.is_today %}bg-blue-50/10{% endif %}"></div>
+                        {% endfor %}
+                    </div>
+
+                    {% for label in time_labels %}
+                    <div class="h-24 border-b border-slate-50 py-2 text-center text-[10px] font-bold text-secondary">{{ label }}</div>
+                    <div class="col-span-7 border-b border-slate-50"></div>
+                    {% endfor %}
+
+                    {% for day_group in week_day_appointments %}
+                    <div class="calendar-day-column pointer-events-none absolute bottom-0 top-0 w-[calc((100%-80px)/7)]" data-day-index="{{ forloop.counter0 }}" style="left: calc(80px + ({{ forloop.counter0 }} * ((100% - 80px) / 7)));">
+                        {% for appointment in day_group.appointments %}
+                        <div class="appointment-card pointer-events-auto absolute left-[6%] right-[6%] rounded-r-lg border-l-4 p-2 shadow-sm transition-all hover:z-20 {{ appointment.card_class }}" data-doctor-id="{{ appointment.doctor_id }}" style="top: {{ appointment.top_percent }}%; height: {{ appointment.height_percent }}%;">
+                            <p class="text-[10px] font-black uppercase tracking-tighter {{ appointment.text_class }}">{{ appointment.reason }}</p>
+                            <p class="mt-1 truncate text-xs font-bold text-on-surface">{{ appointment.patient_code }}</p>
+                            <p class="mt-1 truncate text-[9px] font-semibold {{ appointment.meta_class }}">{{ appointment.start_label }} - {{ appointment.end_label }}</p>
+                            <p class="truncate text-[9px] text-on-surface-variant">{{ appointment.doctor_name }}</p>
+                            <span class="absolute right-2 top-2 h-2 w-2 rounded-full {{ appointment.dot_class }}"></span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="pointer-events-none absolute hidden left-[80px] right-0 z-30 h-px bg-red-500" id="current-time-indicator">
+                    <div class="-ml-1.5 h-3 w-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="flex h-16 items-center gap-12 border-t-0 border-slate-100 bg-surface-container-low px-8">
+            <div class="flex items-center gap-3">
+                <span class="text-[10px] font-black uppercase tracking-[0.1em] text-secondary">Daily Capacity</span>
+                <div class="h-2 w-32 overflow-hidden rounded-full bg-surface-container-highest">
+                    <div class="h-full bg-primary" style="width: {{ staff_calendar_stats.capacity_percent }}%"></div>
+                </div>
+                <span class="text-xs font-bold text-on-surface">{{ staff_calendar_stats.appointments_today }}</span>
+            </div>
+            <div class="flex items-center gap-8">
+                <div class="flex flex-col">
+                    <span class="text-[8px] font-black uppercase tracking-widest text-secondary">Appointments Today</span>
+                    <span class="headline-font text-lg font-extrabold leading-none text-blue-900">{{ staff_calendar_stats.appointments_today }}</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[8px] font-black uppercase tracking-widest text-secondary">Staff On-Duty</span>
+                    <span class="headline-font text-lg font-extrabold leading-none text-blue-900">{{ staff_calendar_stats.staff_on_duty }}</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[8px] font-black uppercase tracking-widest text-secondary">Doctors</span>
+                    <span class="headline-font text-lg font-extrabold leading-none text-blue-900">{{ staff_calendar_stats.doctors_total }}</span>
+                </div>
+            </div>
+            <div class="ml-auto flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm text-secondary" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-secondary">Secure Command Session</span>
+            </div>
+        </footer>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/staff_appointments.js' %}"></script>
+{% endblock %}

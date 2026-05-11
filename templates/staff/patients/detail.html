@@ -1,0 +1,133 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Fiche Patient | HealthSync{% endblock %}
+
+{% block content %}
+<main class="mx-auto w-full max-w-7xl px-8 pb-12 space-y-8">
+    <div class="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+            <div class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+                <a class="hover:text-primary" href="{% url 'staff_patient_list' %}">Patients</a>
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+                <span class="text-primary">Fiche</span>
+            </div>
+            <h2 class="text-4xl font-extrabold tracking-tight text-slate-900">{{ patient.full_name }}</h2>
+            <p class="mt-2 text-sm font-medium text-slate-500">{{ patient.patient_code }} • {{ patient.barcode_value }}</p>
+        </div>
+        <div class="flex gap-3">
+            <a class="rounded-full bg-surface-container-high px-6 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container" href="{% url 'staff_patient_list' %}">Retour liste</a>
+            <button class="rounded-full bg-primary px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-primary/20 transition hover:opacity-90" data-url="{% url 'staff_patient_receipt' patient.id %}" id="print-receipt-link" type="button">Imprimer ticket</button>
+        </div>
+    </div>
+
+    <section class="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.2fr)_420px]">
+        <div class="rounded-[2rem] bg-surface-container-lowest p-8 shadow-sm">
+            <h3 class="text-xl font-bold text-slate-900">Informations d'identification</h3>
+            <div class="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div><p class="text-xs font-bold uppercase tracking-wider text-slate-400">Prenom</p><p class="mt-2 text-sm font-semibold text-slate-900">{{ patient.first_name|default:"-" }}</p></div>
+                <div><p class="text-xs font-bold uppercase tracking-wider text-slate-400">Nom</p><p class="mt-2 text-sm font-semibold text-slate-900">{{ patient.last_name|default:"-" }}</p></div>
+                <div><p class="text-xs font-bold uppercase tracking-wider text-slate-400">Date de naissance</p><p class="mt-2 text-sm font-semibold text-slate-900">{{ patient.date_of_birth|date:"d/m/Y"|default:"-" }}</p></div>
+                <div><p class="text-xs font-bold uppercase tracking-wider text-slate-400">Sexe</p><p class="mt-2 text-sm font-semibold text-slate-900">{{ patient.gender|default:"-" }}</p></div>
+                <div><p class="text-xs font-bold uppercase tracking-wider text-slate-400">Telephone</p><p class="mt-2 text-sm font-semibold text-slate-900">{{ patient.phone|default:"-" }}</p></div>
+                <div><p class="text-xs font-bold uppercase tracking-wider text-slate-400">Email</p><p class="mt-2 text-sm font-semibold text-slate-900">{{ patient.email|default:"-" }}</p></div>
+                <div><p class="text-xs font-bold uppercase tracking-wider text-slate-400">CIN / Code patient</p><p class="mt-2 text-sm font-semibold text-slate-900">{{ patient.patient_code|default:"-" }}</p></div>
+                <div class="md:col-span-2"><p class="text-xs font-bold uppercase tracking-wider text-slate-400">Adresse</p><p class="mt-2 text-sm font-semibold text-slate-900">{{ patient.address|default:"-" }}</p></div>
+            </div>
+        </div>
+
+        <aside class="rounded-[2rem] bg-primary-container p-8 text-white shadow-lg">
+            <h3 class="text-xl font-bold">Dossier rapide</h3>
+            <div class="mt-6 space-y-5">
+                <div><p class="text-xs font-bold uppercase tracking-wider text-white/60">Groupe sanguin</p><p class="mt-2 text-sm font-semibold">{{ patient.blood_group|default:"-" }}</p></div>
+                <div><p class="text-xs font-bold uppercase tracking-wider text-white/60">Contact d'urgence</p><p class="mt-2 text-sm font-semibold">{{ patient.emergency_contact_name|default:"-" }}</p><p class="mt-1 text-sm text-white/80">{{ patient.emergency_contact_phone|default:"-" }}</p></div>
+                <div><p class="text-xs font-bold uppercase tracking-wider text-white/60">Statut</p><p class="mt-2 text-sm font-semibold">{% if patient.is_active %}Actif{% else %}Inactif{% endif %}</p></div>
+            </div>
+        </aside>
+    </section>
+
+    <section class="rounded-[2rem] bg-surface-container-lowest p-8 shadow-sm">
+        <div class="flex items-end justify-between gap-4 flex-wrap">
+            <div>
+                <h3 class="text-xl font-bold text-slate-900">Constantes vitales</h3>
+                <p class="mt-2 text-sm text-slate-500">Resume structure des mesures recues depuis le kiosk ou saisies dans le dossier.</p>
+            </div>
+        </div>
+        <div class="mt-6 overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Date</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Temperature</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">FC</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">SpO2</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">TA</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Resp / Glycemie</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Poids / Taille</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Source</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for vital in patient_vital_signs %}
+                    <tr>
+                        <td class="px-6 py-5 text-sm font-semibold text-on-surface">{{ vital.measured_at|date:"d/m/Y H:i" }}</td>
+                        <td class="px-6 py-5 text-sm text-on-surface">{{ vital.temperature_c|default_if_none:"-" }}{% if vital.temperature_c %} deg C{% endif %}</td>
+                        <td class="px-6 py-5 text-sm text-on-surface">{{ vital.heart_rate_bpm|default_if_none:"-" }}{% if vital.heart_rate_bpm %} bpm{% endif %}</td>
+                        <td class="px-6 py-5 text-sm text-on-surface">{{ vital.spo2_percent|default_if_none:"-" }}{% if vital.spo2_percent %} %{% endif %}</td>
+                        <td class="px-6 py-5 text-sm text-on-surface">{{ vital.blood_pressure_display|default:"-" }}</td>
+                        <td class="px-6 py-5 text-sm text-on-surface">
+                            {{ vital.respiratory_rate_bpm|default_if_none:"-" }}{% if vital.respiratory_rate_bpm %} bpm{% endif %}
+                            /
+                            {{ vital.blood_glucose_mg_dl|default_if_none:"-" }}{% if vital.blood_glucose_mg_dl %} mg/dL{% endif %}
+                        </td>
+                        <td class="px-6 py-5 text-sm text-on-surface">
+                            {{ vital.weight_kg|default_if_none:"-" }}{% if vital.weight_kg %} kg{% endif %}
+                            /
+                            {{ vital.height_cm|default_if_none:"-" }}{% if vital.height_cm %} cm{% endif %}
+                        </td>
+                        <td class="px-6 py-5 text-sm text-on-surface">
+                            <p>{{ vital.measurement_source|default:"-" }}</p>
+                            {% if vital.etablissement %}<p class="text-xs text-on-surface-variant">{{ vital.etablissement.nom }}</p>{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td class="px-6 py-10 text-center text-on-surface-variant" colspan="8">Aucune constante vitale structuree pour ce patient.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="rounded-[2rem] bg-surface-container-lowest p-8 shadow-sm">
+        <h3 class="text-xl font-bold text-slate-900">Historique des rendez-vous</h3>
+        <div class="mt-6 overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Date</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Medecin</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Motif</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Statut</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for appointment in patient_appointments %}
+                    <tr>
+                        <td class="px-6 py-5 text-sm font-semibold text-on-surface">{{ appointment.scheduled_at|date:"d/m/Y H:i" }}</td>
+                        <td class="px-6 py-5 text-sm text-on-surface">{{ appointment.medecin.full_name|default:appointment.medecin.email }}</td>
+                        <td class="px-6 py-5 text-sm text-on-surface">{{ appointment.reason|default:"Consultation" }}</td>
+                        <td class="px-6 py-5"><span class="px-3 py-1 rounded-full text-xs font-semibold bg-secondary-container text-on-secondary-container">{{ appointment.status_display_name }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td class="px-6 py-10 text-center text-on-surface-variant" colspan="4">Aucun rendez-vous pour ce patient.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/staff_patient_create.js' %}"></script>
+{% endblock %}

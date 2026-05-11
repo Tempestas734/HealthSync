@@ -13,13 +13,17 @@
             <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'super_admin_facility_list' or request.resolver_match.url_name == 'super_admin_facility_detail' or request.resolver_match.url_name == 'super_admin_facility_create' or request.resolver_match.url_name == 'super_admin_facility_edit' %}fill-icon{% endif %}">domain</span>
             <span class="font-medium">Facilities</span>
         </a>
-        <a class="{% if request.resolver_match.url_name == 'super_admin_user_list' or request.resolver_match.url_name == 'super_admin_user_detail' or request.resolver_match.url_name == 'super_admin_user_create' or request.resolver_match.url_name == 'super_admin_user_edit' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'super_admin_user_list' %}">
-            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'super_admin_user_list' or request.resolver_match.url_name == 'super_admin_user_detail' or request.resolver_match.url_name == 'super_admin_user_create' or request.resolver_match.url_name == 'super_admin_user_edit' %}fill-icon{% endif %}">group</span>
+        <a class="{% if request.resolver_match.url_name == 'super_admin_user_list' or request.resolver_match.url_name == 'super_admin_user_detail' or request.resolver_match.url_name == 'super_admin_user_create' or request.resolver_match.url_name == 'super_admin_user_edit' or request.resolver_match.url_name == 'super_admin_user_reset_password' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'super_admin_user_list' %}">
+            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'super_admin_user_list' or request.resolver_match.url_name == 'super_admin_user_detail' or request.resolver_match.url_name == 'super_admin_user_create' or request.resolver_match.url_name == 'super_admin_user_edit' or request.resolver_match.url_name == 'super_admin_user_reset_password' %}fill-icon{% endif %}">group</span>
             <span class="font-medium">Users</span>
         </a>
-        <a class="{% if request.resolver_match.url_name == 'super_admin_doctor_list' or request.resolver_match.url_name == 'super_admin_doctor_detail' or request.resolver_match.url_name == 'super_admin_doctor_create' or request.resolver_match.url_name == 'super_admin_doctor_edit' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'super_admin_doctor_list' %}">
-            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'super_admin_doctor_list' or request.resolver_match.url_name == 'super_admin_doctor_detail' or request.resolver_match.url_name == 'super_admin_doctor_create' or request.resolver_match.url_name == 'super_admin_doctor_edit' %}fill-icon{% endif %}">medical_services</span>
+        <a class="{% if request.resolver_match.url_name == 'super_admin_doctor_list' or request.resolver_match.url_name == 'super_admin_doctor_detail' or request.resolver_match.url_name == 'super_admin_doctor_create' or request.resolver_match.url_name == 'super_admin_doctor_edit' or request.resolver_match.url_name == 'super_admin_doctor_link_account' or request.resolver_match.url_name == 'super_admin_doctor_reset_password' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'super_admin_doctor_list' %}">
+            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'super_admin_doctor_list' or request.resolver_match.url_name == 'super_admin_doctor_detail' or request.resolver_match.url_name == 'super_admin_doctor_create' or request.resolver_match.url_name == 'super_admin_doctor_edit' or request.resolver_match.url_name == 'super_admin_doctor_link_account' or request.resolver_match.url_name == 'super_admin_doctor_reset_password' %}fill-icon{% endif %}">medical_services</span>
             <span class="font-medium">Doctors</span>
+        </a>
+        <a class="{% if request.resolver_match.url_name == 'super_admin_role_list' or request.resolver_match.url_name == 'super_admin_role_create' or request.resolver_match.url_name == 'super_admin_role_edit' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'super_admin_role_list' %}">
+            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'super_admin_role_list' or request.resolver_match.url_name == 'super_admin_role_create' or request.resolver_match.url_name == 'super_admin_role_edit' %}fill-icon{% endif %}">badge</span>
+            <span class="font-medium">Roles</span>
         </a>
         <form action="{% url 'logout' %}" class="mx-2" method="post">
             {% csrf_token %}
@@ -58,6 +62,10 @@
             <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'dashboard' %}fill-icon{% endif %}">grid_view</span>
             <span class="font-medium">Overview</span>
         </a>
+        <a class="{% if request.resolver_match.url_name == 'admin_etablissement_detail' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'admin_etablissement_detail' %}">
+            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'admin_etablissement_detail' %}fill-icon{% endif %}">apartment</span>
+            <span class="font-medium">Etablissement</span>
+        </a>
         <a class="{% if request.resolver_match.url_name == 'admin_etablissement_invitations' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'admin_etablissement_invitations' %}">
             <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'admin_etablissement_invitations' %}fill-icon{% endif %}">mail</span>
             <span class="font-medium">Invitations</span>
@@ -66,17 +74,21 @@
             <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'admin_etablissement_staff_list' or request.resolver_match.url_name == 'admin_etablissement_staff_detail' or request.resolver_match.url_name == 'admin_etablissement_staff_create' or request.resolver_match.url_name == 'admin_etablissement_staff_edit' %}fill-icon{% endif %}">groups</span>
             <span class="font-medium">Staff</span>
         </a>
-        <a class="{% if request.resolver_match.url_name == 'admin_etablissement_availability' or request.resolver_match.url_name == 'admin_etablissement_doctor_leaves' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'admin_etablissement_availability' %}">
-            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'admin_etablissement_availability' or request.resolver_match.url_name == 'admin_etablissement_doctor_leaves' %}fill-icon{% endif %}">calendar_today</span>
+        <a class="{% if request.resolver_match.url_name == 'admin_etablissement_availability' or request.resolver_match.url_name == 'admin_etablissement_doctor_leaves' or request.resolver_match.url_name == 'admin_etablissement_doctor_schedule' or request.resolver_match.url_name == 'admin_etablissement_doctor_calendar' or request.resolver_match.url_name == 'admin_etablissement_attendance' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'admin_etablissement_attendance' %}">
+            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'admin_etablissement_availability' or request.resolver_match.url_name == 'admin_etablissement_doctor_leaves' or request.resolver_match.url_name == 'admin_etablissement_doctor_schedule' or request.resolver_match.url_name == 'admin_etablissement_doctor_calendar' or request.resolver_match.url_name == 'admin_etablissement_attendance' %}fill-icon{% endif %}">monitor_heart</span>
+            <span class="font-medium">Presences</span>
+        </a>
+        <a class="{% if request.resolver_match.url_name == 'admin_etablissement_patient_list' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'admin_etablissement_patient_list' %}">
+            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'admin_etablissement_patient_list' %}fill-icon{% endif %}">groups</span>
+            <span class="font-medium">Patients</span>
+        </a>
+        <a class="{% if request.resolver_match.url_name == 'admin_etablissement_appointment_list' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'admin_etablissement_appointment_list' %}">
+            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'admin_etablissement_appointment_list' %}fill-icon{% endif %}">calendar_month</span>
+            <span class="font-medium">Rendez-vous</span>
+        </a>
+        <a class="{% if request.resolver_match.url_name == 'admin_etablissement_availability' or request.resolver_match.url_name == 'admin_etablissement_doctor_leaves' or request.resolver_match.url_name == 'admin_etablissement_doctor_schedule' or request.resolver_match.url_name == 'admin_etablissement_doctor_calendar' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'admin_etablissement_availability' %}">
+            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'admin_etablissement_availability' or request.resolver_match.url_name == 'admin_etablissement_doctor_leaves' or request.resolver_match.url_name == 'admin_etablissement_doctor_schedule' or request.resolver_match.url_name == 'admin_etablissement_doctor_calendar' %}fill-icon{% endif %}">calendar_today</span>
             <span class="font-medium">Disponibilites</span>
-        </a>
-        <a class="flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200" href="#">
-            <span class="material-symbols-outlined mr-4">monitor_heart</span>
-            <span class="font-medium">Health Data</span>
-        </a>
-        <a class="flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200" href="#">
-            <span class="material-symbols-outlined mr-4">security</span>
-            <span class="font-medium">Security</span>
         </a>
         <form action="{% url 'logout' %}" class="mx-2" method="post">
             {% csrf_token %}
@@ -106,18 +118,13 @@
 </aside>
 {% elif user_role == "doctor" or user_role == "medecin" %}
 <aside class="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-surface-container-lowest py-6 border-r border-surface-container z-40">
-    <style>
-        .doctor-facility-toggle[open] .doctor-facility-arrow {
-            transform: rotate(90deg);
-        }
-    </style>
     <div class="px-6 py-2">
         <div class="flex items-center gap-3 mb-10">
             <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
                 <span class="material-symbols-outlined fill-icon">health_and_safety</span>
             </div>
             <div>
-                <h1 class="text-lg font-extrabold headline-font text-primary">Aegis Central</h1>
+                <h1 class="text-lg font-extrabold headline-font text-primary">Health Sync</h1>
                 <p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Medical Space</p>
             </div>
         </div>
@@ -126,13 +133,13 @@
                 <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'dashboard' %}fill-icon{% endif %}">dashboard</span>
                 <span>Dashboard</span>
             </a>
-            <a class="{% if request.resolver_match.url_name == 'doctor_invitations' %}flex items-center gap-3 px-4 py-3 text-primary border-r-4 border-primary bg-white font-medium transition-all duration-300 ease-out{% else %}flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary hover:bg-primary-fixed/30 transition-all duration-300 ease-out font-medium{% endif %}" href="{% url 'doctor_invitations' %}">
+            <a class="{% if request.resolver_match.url_name == 'doctor_invitations' or request.resolver_match.url_name == 'doctor_invitation_open' %}flex items-center gap-3 px-4 py-3 text-primary border-r-4 border-primary bg-white font-medium transition-all duration-300 ease-out{% else %}flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary hover:bg-primary-fixed/30 transition-all duration-300 ease-out font-medium{% endif %}" href="{% url 'doctor_invitations' %}">
                 <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'doctor_invitations' %}fill-icon{% endif %}">mail</span>
                 <span>Invitations</span>
             </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary hover:bg-primary-fixed/30 transition-all duration-300 ease-out font-medium" href="#">
-                <span class="material-symbols-outlined">analytics</span>
-                <span>Analytics</span>
+            <a class="{% if request.resolver_match.url_name == 'doctor_calendar' %}flex items-center gap-3 px-4 py-3 text-primary border-r-4 border-primary bg-white font-medium transition-all duration-300 ease-out{% else %}flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary hover:bg-primary-fixed/30 transition-all duration-300 ease-out font-medium{% endif %}" href="{% url 'doctor_calendar' %}">
+                <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'doctor_calendar' %}fill-icon{% endif %}">calendar_view_month</span>
+                <span>Calendrier Global</span>
             </a>
             <div class="pt-3">
                 <div class="px-4 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Etablissements Lies</div>
@@ -145,17 +152,25 @@
                             <span class="doctor-facility-arrow material-symbols-outlined text-on-surface-variant transition-transform duration-200">chevron_right</span>
                         </summary>
                         <div class="space-y-1 px-3 pb-3">
-                            <a class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-on-surface-variant hover:bg-white hover:text-primary transition-all duration-200" href="#">
+                            <a class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-on-surface-variant hover:bg-white hover:text-primary transition-all duration-200" href="{% url 'doctor_availability' %}?facility={{ facility_link.etablissement_id }}">
+                                <span class="material-symbols-outlined text-base">event_available</span>
+                                <span>Disponibilites</span>
+                            </a>
+                            <a class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-on-surface-variant hover:bg-white hover:text-primary transition-all duration-200" href="{% url 'doctor_patient_list' %}?facility={{ facility_link.etablissement_id }}">
                                 <span class="material-symbols-outlined text-base">group</span>
                                 <span>Patients</span>
                             </a>
-                            <a class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-on-surface-variant hover:bg-white hover:text-primary transition-all duration-200" href="#">
+                            <a class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-on-surface-variant hover:bg-white hover:text-primary transition-all duration-200" href="{% url 'doctor_schedule' %}?facility={{ facility_link.etablissement_id }}">
                                 <span class="material-symbols-outlined text-base">calendar_today</span>
-                                <span>Schedules</span>
+                                <span>Horaires</span>
                             </a>
-                            <a class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-on-surface-variant hover:bg-white hover:text-primary transition-all duration-200" href="#">
-                                <span class="material-symbols-outlined text-base">clinical_notes</span>
-                                <span>Medical Records</span>
+                            <a class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-on-surface-variant hover:bg-white hover:text-primary transition-all duration-200" href="{% url 'doctor_leaves' %}?facility={{ facility_link.etablissement_id }}">
+                                <span class="material-symbols-outlined text-base">event_busy</span>
+                                <span>Conges</span>
+                            </a>
+                            <a class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-on-surface-variant hover:bg-white hover:text-primary transition-all duration-200" href="{% url 'doctor_appointments' %}?facility={{ facility_link.etablissement_id }}">
+                                <span class="material-symbols-outlined text-base">calendar_month</span>
+                                <span>Rendez-vous</span>
                             </a>
                         </div>
                     </details>
@@ -173,10 +188,10 @@
         </nav>
     </div>
     <div class="mt-auto p-6 space-y-4">
-        <button class="w-full py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-full font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20" type="button">
+        <a class="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-primary to-primary-container py-3 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary/20" href="{% url 'doctor_appointments' %}">
             <span class="material-symbols-outlined text-sm">add</span>
-            <span>New Appointment</span>
-        </button>
+            <span>Mes Rendez-vous</span>
+        </a>
         <form action="{% url 'logout' %}" method="post">
             {% csrf_token %}
             <button class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-error transition-all duration-300 ease-out font-medium" type="submit">
@@ -186,7 +201,7 @@
         </form>
     </div>
 </aside>
-{% elif user_role == "secretary" or user_role == "secretaire" or user_role == "infirmier" %}
+{% elif user_role == "secretary" or user_role == "secretaire" or user_role == "infirmier" or user_role == "assistant" or user_role == "receptionniste" or user_role == "technicien" or user_role == "staff_frontdesk" %}
 <aside class="hidden lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 bg-surface-container-lowest border-r border-surface-container z-40 p-6 pt-10">
     <div class="mb-10 px-4">
         <h1 class="text-lg font-bold text-primary headline-font">Admin Console</h1>
@@ -197,18 +212,28 @@
             <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'dashboard' %}fill-icon{% endif %}">analytics</span>
             <span>Command Center</span>
         </a>
+        {% if user_role == "infirmier" %}
         <a class="{% if request.resolver_match.url_name == 'staff_attendance' %}flex items-center gap-3 bg-primary-fixed/40 text-primary rounded-lg py-3 px-4 font-bold transition-transform duration-200 hover:translate-x-1{% else %}flex items-center gap-3 text-on-surface-variant py-3 px-4 hover:bg-surface-container-low rounded-lg transition-transform duration-200 hover:translate-x-1{% endif %}" href="{% url 'staff_attendance' %}">
             <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'staff_attendance' %}fill-icon{% endif %}">stethoscope</span>
             <span>Attendance</span>
         </a>
+        {% endif %}
+        {% if user_role == "secretary" or user_role == "secretaire" or user_role == "infirmier" or user_role == "receptionniste" or user_role == "staff_frontdesk" %}
+        <a class="{% if request.resolver_match.url_name == 'staff_appointments' %}flex items-center gap-3 bg-primary-fixed/40 text-primary rounded-lg py-3 px-4 font-bold transition-transform duration-200 hover:translate-x-1{% else %}flex items-center gap-3 text-on-surface-variant py-3 px-4 hover:bg-surface-container-low rounded-lg transition-transform duration-200 hover:translate-x-1{% endif %}" href="{% url 'staff_appointments' %}">
+            <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'staff_appointments' %}fill-icon{% endif %}">calendar_month</span>
+            <span>Appointments</span>
+        </a>
+        {% endif %}
         <a class="flex items-center gap-3 text-on-surface-variant py-3 px-4 hover:bg-surface-container-low rounded-lg transition-transform duration-200 hover:translate-x-1" href="#">
             <span class="material-symbols-outlined">apartment</span>
             <span>Facility Registry</span>
         </a>
-        <a class="{% if request.resolver_match.url_name == 'staff_patient_create' %}flex items-center gap-3 bg-primary-fixed/40 text-primary rounded-lg py-3 px-4 font-bold transition-transform duration-200 hover:translate-x-1{% else %}flex items-center gap-3 text-on-surface-variant py-3 px-4 hover:bg-surface-container-low rounded-lg transition-transform duration-200 hover:translate-x-1{% endif %}" href="{% url 'staff_patient_create' %}">
-            <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'staff_patient_create' %}fill-icon{% endif %}">groups</span>
+        {% if user_role == "secretary" or user_role == "secretaire" or user_role == "infirmier" or user_role == "assistant" or user_role == "receptionniste" or user_role == "staff_frontdesk" %}
+        <a class="{% if request.resolver_match.url_name == 'staff_patient_list' or request.resolver_match.url_name == 'staff_patient_detail' or request.resolver_match.url_name == 'staff_patient_create' %}flex items-center gap-3 bg-primary-fixed/40 text-primary rounded-lg py-3 px-4 font-bold transition-transform duration-200 hover:translate-x-1{% else %}flex items-center gap-3 text-on-surface-variant py-3 px-4 hover:bg-surface-container-low rounded-lg transition-transform duration-200 hover:translate-x-1{% endif %}" href="{% url 'staff_patient_list' %}">
+            <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'staff_patient_list' or request.resolver_match.url_name == 'staff_patient_detail' or request.resolver_match.url_name == 'staff_patient_create' %}fill-icon{% endif %}">groups</span>
             <span>Patients</span>
         </a>
+        {% endif %}
         <a class="flex items-center gap-3 text-on-surface-variant py-3 px-4 hover:bg-surface-container-low rounded-lg transition-transform duration-200 hover:translate-x-1" href="#">
             <span class="material-symbols-outlined">verified_user</span>
             <span>Compliance Logs</span>

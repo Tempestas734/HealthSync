@@ -80,12 +80,20 @@
                         <td class="px-6 py-5 text-sm font-semibold text-on-surface">{% if row.presence and row.presence.check_out_time %}{{ row.presence.check_out_time|date:"h:i A" }}{% else %}-{% endif %}</td>
                         <td class="px-6 py-5">
                             <div class="flex items-center justify-end">
-                                <form method="post">
+                                <form class="w-full max-w-md" method="post">
                                     {% csrf_token %}
                                     <input name="medecin_id" type="hidden" value="{{ row.doctor_link.medecin_id }}">
-                                    <button class="{% if row.is_checked_in %}rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container{% else %}rounded-full bg-green-50 px-4 py-2 text-xs font-bold text-green-700 hover:bg-green-100{% endif %} transition-colors" name="action" type="submit" value="{{ row.next_action }}">
-                                        {% if row.is_checked_in %}Check-out{% else %}Check-in{% endif %}
-                                    </button>
+                                    <div class="flex flex-col gap-2 items-end">
+                                        <div class="flex gap-2 flex-wrap justify-end">
+                                            <button class="{% if row.is_checked_in %}rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary-container{% else %}rounded-full bg-green-50 px-4 py-2 text-xs font-bold text-green-700 hover:bg-green-100{% endif %} transition-colors" name="action" type="submit" value="{{ row.next_action }}">
+                                                {% if row.is_checked_in %}Check-out{% else %}Check-in{% endif %}
+                                            </button>
+                                            <button class="rounded-full bg-red-50 px-4 py-2 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors" name="action" type="submit" value="absent">Absent</button>
+                                            <button class="rounded-full bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors" name="action" type="submit" value="delayed">En retard</button>
+                                            <button class="rounded-full bg-purple-50 px-4 py-2 text-xs font-bold text-purple-700 hover:bg-purple-100 transition-colors" name="action" type="submit" value="replaced">Remplace</button>
+                                        </div>
+                                        <textarea class="min-h-[44px] w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-xs focus:ring-2 focus:ring-primary/20" name="notes" placeholder="Note de presence...">{% if row.presence and row.presence.notes %}{{ row.presence.notes }}{% endif %}</textarea>
+                                    </div>
                                 </form>
                             </div>
                         </td>
@@ -116,6 +124,7 @@
                         <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Check-in/Out</th>
                         <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Duration</th>
                         <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Declared By</th>
+                        <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">Statut / Note</th>
                         <th class="px-6 py-4 text-[10px] uppercase font-bold tracking-widest text-on-surface-variant text-right">Date</th>
                     </tr>
                 </thead>
@@ -146,11 +155,15 @@
                                 {% if log.declared_by_user %}{{ log.declared_by_user.first_name }} {{ log.declared_by_user.last_name }}{% else %}System{% endif %}
                             </span>
                         </td>
+                        <td class="px-6 py-5">
+                            <p class="text-xs font-bold uppercase tracking-wider text-on-surface">{{ log.status_display_name }}</p>
+                            <p class="mt-1 text-xs text-on-surface-variant">{{ log.notes|default:"-" }}</p>
+                        </td>
                         <td class="px-6 py-5 text-right font-medium text-on-surface-variant text-sm">{{ log.presence_date|date:"M d, Y" }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td class="px-6 py-8 text-sm text-on-surface-variant" colspan="5">No recent presence logs for this facility.</td>
+                        <td class="px-6 py-8 text-sm text-on-surface-variant" colspan="6">No recent presence logs for this facility.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

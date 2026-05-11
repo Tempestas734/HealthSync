@@ -116,6 +116,10 @@
                     </td>
                     <td class="px-6 py-5">
                         {% if invitation.status == "pending" %}
+                        <div class="flex items-center justify-end gap-2">
+                        <a class="px-3 py-2 text-xs font-bold text-primary bg-primary/5 rounded-lg transition-all" href="{% url 'doctor_invitation_open' invitation.invitation_token %}">
+                            Ouvrir
+                        </a>
                         <form action="{% url 'doctor_invitation_decision' invitation.id %}" class="flex items-center justify-end gap-2" method="post">
                             {% csrf_token %}
                             <input class="bg-surface-container-lowest border-none rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 w-28" maxlength="20" minlength="4" name="pin_code" placeholder="Code PIN" required type="password">
@@ -126,11 +130,12 @@
                                 Refuser
                             </button>
                         </form>
+                        </div>
                         {% else %}
                         <div class="flex items-center justify-end">
-                            <button class="p-2 text-primary hover:bg-primary/5 rounded-lg transition-all" title="Voir" type="button">
+                            <a class="p-2 text-primary hover:bg-primary/5 rounded-lg transition-all" href="{% url 'doctor_invitation_open' invitation.invitation_token %}" title="Voir">
                                 <span class="material-symbols-outlined text-lg">visibility</span>
-                            </button>
+                            </a>
                         </div>
                         {% endif %}
                     </td>

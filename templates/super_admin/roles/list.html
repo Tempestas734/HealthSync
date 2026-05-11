@@ -1,0 +1,69 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Roles{% endblock %}
+
+{% block content %}
+<div class="px-8 pt-8 pb-4">
+    <div class="flex justify-between items-end gap-4 flex-wrap">
+        <div>
+            <h2 class="text-3xl font-extrabold text-on-surface tracking-tight headline-font">Gestion des roles</h2>
+            <p class="text-on-surface-variant mt-1">{{ roles_count }} role{{ roles_count|pluralize }} configure{{ roles_count|pluralize }}.</p>
+        </div>
+        <a class="flex items-center px-6 py-3 bg-gradient-to-b from-primary to-primary-container text-on-primary rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-[0.98] active:scale-100 transition-all" href="{% url 'super_admin_role_create' %}">
+            <span class="material-symbols-outlined mr-2">add</span>
+            Nouveau role
+        </a>
+    </div>
+</div>
+
+<div class="px-8 pb-8 flex-1">
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden">
+        <form class="p-6 flex flex-wrap gap-4 items-center bg-surface-container-lowest border-b border-surface-container" method="get">
+            <input class="bg-surface-container-low border-none rounded-lg text-sm font-medium py-2 px-4 focus:ring-1 focus:ring-primary/20 min-w-64" name="q" placeholder="Rechercher par code, nom ou description" type="text" value="{{ filters.q }}">
+            <div class="ml-auto flex items-center gap-3">
+                <button class="flex items-center px-4 py-2 bg-primary text-on-primary rounded-lg transition-all text-sm font-medium" type="submit">Filtrer</button>
+                <a class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all text-sm font-medium" href="{% url 'super_admin_role_list' %}">Reinitialiser</a>
+            </div>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Code</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Nom</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Description</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Utilisateurs</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for role in roles %}
+                    <tr class="hover:bg-surface-container-low/50 transition-colors group">
+                        <td class="py-5 px-6"><span class="font-semibold text-on-surface">{{ role.code }}</span></td>
+                        <td class="py-5 px-6"><span class="text-on-surface">{{ role.nom }}</span></td>
+                        <td class="py-5 px-6"><span class="text-sm text-on-surface-variant">{{ role.description|default:"-" }}</span></td>
+                        <td class="py-5 px-6"><span class="text-sm font-semibold text-on-surface">{{ role.users.count }}</span></td>
+                        <td class="py-5 px-6 text-right">
+                            <div class="flex justify-end items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <a class="p-2 hover:bg-surface-container-high rounded-lg text-on-surface-variant transition-all" href="{% url 'super_admin_role_edit' role.id %}" title="Modifier"><span class="material-symbols-outlined text-xl">edit_square</span></a>
+                                <form action="{% url 'super_admin_role_delete' role.id %}" method="post" onsubmit="return confirm('Supprimer ce role ?');">
+                                    {% csrf_token %}
+                                    <button class="p-2 hover:bg-error-container hover:text-error rounded-lg text-on-surface-variant transition-all" title="Supprimer" type="submit">
+                                        <span class="material-symbols-outlined text-xl">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="px-6 py-10 text-center text-on-surface-variant" colspan="5">Aucun role trouve.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

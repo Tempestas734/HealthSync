@@ -1,0 +1,88 @@
+@page {
+    size: 80mm auto;
+    margin: 0;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    color: #000;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.ticket {
+    width: 80mm;
+    padding: 2mm 3mm 4mm;
+    box-sizing: border-box;
+}
+
+.center {
+    text-align: center;
+}
+
+.title {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.line {
+    border-top: 1px dashed #000;
+    margin: 6px 0;
+}
+
+.row {
+    margin: 3px 0;
+    word-break: break-word;
+}
+
+.label {
+    font-weight: 700;
+}
+
+.code-block {
+    margin-top: 6px;
+    padding: 6px 4px;
+    border: 1px solid #000;
+    text-align: center;
+}
+
+.qrcode-box {
+    margin-top: 8px;
+    padding: 6px 0 2px;
+    text-align: center;
+}
+
+.qrcode-box img,
+.qrcode-box canvas {
+    margin: 0 auto;
+}
+
+.code-value {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.actions {
+    padding: 18px 12px 14px;
+    text-align: center;
+}
+
+button {
+    border: 0;
+    border-radius: 999px;
+    padding: 14px 28px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+@media print {
+    .actions {
+        display: none;
+    }
+}

@@ -82,6 +82,22 @@ class SupabaseAdminService:
         self._raise_for_status(response, "update auth user")
         return response.json()
 
+    def reset_auth_user_password(self, *, user_id, password):
+        payload = {
+            "password": password,
+            "user_metadata": {
+                "requires_password_change": True,
+            },
+        }
+        response = requests.put(
+            f"{self.base_url}/auth/v1/admin/users/{user_id}",
+            headers=self._headers(),
+            json=payload,
+            timeout=15,
+        )
+        self._raise_for_status(response, "reset auth user password")
+        return response.json()
+
     def update_current_user_password(self, *, access_token, password):
         response = requests.put(
             f"{self.base_url}/auth/v1/user",

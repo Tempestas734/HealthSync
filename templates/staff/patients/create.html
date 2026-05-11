@@ -1,4 +1,5 @@
 {% extends "base/base.html" %}
+{% load static %}
 
 {% block title %}Ajouter un patient | HealthSync{% endblock %}
 
@@ -31,7 +32,7 @@
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">Patient cree</p>
                 <h3 class="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">{{ last_created_patient.full_name }}</h3>
                 <p class="mt-2 text-sm text-slate-600">
-                    Code patient: <span class="font-mono font-bold">{{ last_created_patient.patient_code }}</span>
+                    CIN / Code patient: <span class="font-mono font-bold">{{ last_created_patient.patient_code|default:"-" }}</span>
                     <span class="mx-2">•</span>
                     Barcode: <span class="font-mono font-bold">{{ last_created_patient.barcode_value }}</span>
                 </p>
@@ -110,9 +111,9 @@
 
                 <div class="space-y-6">
                     <div class="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
-                        <p class="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/60">Code patient</p>
-                        <p class="font-mono text-lg font-bold tracking-wider">{{ patient_code_preview }}</p>
-                        <p class="mt-2 text-xs text-white/70">Le code final et le barcode sont generes automatiquement a l'enregistrement.</p>
+                        <p class="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/60">Identification patient</p>
+                        <p class="font-mono text-lg font-bold tracking-wider">Barcode genere automatiquement</p>
+                        <p class="mt-2 text-xs text-white/70">Le CIN / code patient est optionnel. Le barcode est genere automatiquement a l'enregistrement.</p>
                     </div>
                     <div class="space-y-2">
                         <label class="ml-1 text-[10px] font-bold uppercase tracking-widest text-white/60" for="{{ form.blood_group.id_for_label }}">Groupe sanguin</label>
@@ -157,6 +158,11 @@
                     {{ form.email }}
                     {% if form.email.errors %}<p class="text-sm text-red-700">{{ form.email.errors.0 }}</p>{% endif %}
                 </div>
+                <div class="space-y-2">
+                    <label class="ml-1 text-xs font-bold uppercase tracking-wider text-slate-500" for="{{ form.patient_code.id_for_label }}">CIN / Carte nationale</label>
+                    {{ form.patient_code }}
+                    {% if form.patient_code.errors %}<p class="text-sm text-red-700">{{ form.patient_code.errors.0 }}</p>{% endif %}
+                </div>
                 <label class="flex items-center gap-3 rounded-xl bg-white px-4 py-4 text-sm font-medium text-slate-700">
                     {{ form.is_active }}
                     <span>Patient actif</span>
@@ -184,6 +190,7 @@
                 <p class="text-xs font-medium italic">Les identifiants patient et barcode sont attribues automatiquement lors de la creation.</p>
             </div>
             <div class="flex gap-4">
+                <a class="rounded-full px-8 py-4 text-sm font-bold uppercase tracking-widest text-slate-600 transition-colors hover:bg-slate-200" href="{% url 'staff_patient_list' %}">Voir les patients</a>
                 <a class="rounded-full px-8 py-4 text-sm font-bold uppercase tracking-widest text-slate-600 transition-colors hover:bg-slate-200" href="{% url 'dashboard' %}">Annuler</a>
                 <button class="flex items-center gap-3 rounded-full bg-primary px-10 py-4 text-sm font-bold uppercase tracking-widest text-white shadow-xl shadow-primary/20 transition-all hover:scale-105 active:scale-95" type="submit">
                     <span>Enregistrer le patient</span>
@@ -197,62 +204,6 @@
 
 {% block extra_js %}
 {% if last_created_patient %}
-<script>
-    (function () {
-        const printLink = document.getElementById("print-receipt-link");
-        const printStatus = document.getElementById("print-status");
-        const printPanel = document.getElementById("print-panel");
-        if (!printLink) {
-            return;
-        }
-
-        const csrfToken = document.querySelector("input[name='csrfmiddlewaretoken']");
-        const setStatus = function (message, isError) {
-            if (!printStatus) {
-                return;
-            }
-            printStatus.textContent = message || "";
-            printStatus.className = isError ? "mt-3 text-sm font-medium text-red-700" : "mt-3 text-sm font-medium text-emerald-700";
-        };
-
-        printLink.addEventListener("click", async function () {
-            printLink.disabled = true;
-            setStatus("Envoi du ticket a l'imprimante...", false);
-
-            const payload = new URLSearchParams();
-            payload.set("printer", "printer");
-
-            try {
-                const response = await fetch(printLink.dataset.url, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-                        "X-CSRFToken": csrfToken ? csrfToken.value : "",
-                    },
-                    body: payload.toString(),
-                    credentials: "same-origin",
-                });
-                const data = await response.json();
-                if (!response.ok || !data.ok) {
-                    throw new Error(data.error || "Impression impossible.");
-                }
-                setStatus("Ticket imprime sur " + data.printer + ".", false);
-            } catch (error) {
-                setStatus(error.message || "Erreur d'impression.", true);
-            } finally {
-                printLink.disabled = false;
-            }
-        });
-
-        if (printPanel) {
-            window.setTimeout(function () {
-                printPanel.classList.add("opacity-0");
-                window.setTimeout(function () {
-                    printPanel.remove();
-                }, 500);
-            }, 60000);
-        }
-    }());
-</script>
+<script src="{% static 'js/staff_patient_create.js' %}"></script>
 {% endif %}
 {% endblock %}

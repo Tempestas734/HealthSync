@@ -22,6 +22,11 @@
                                 {% if doctor.is_active %}Actif{% else %}Inactif{% endif %}
                             </span>
                         </div>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <a class="px-4 py-2 rounded-xl bg-primary text-on-primary text-sm font-semibold" href="{% url 'super_admin_doctor_edit' doctor.id %}">Modifier</a>
+                            <a class="px-4 py-2 rounded-xl bg-surface-container-high text-on-surface text-sm font-semibold" href="{% url 'super_admin_doctor_link_account' doctor.id %}">Lier un compte</a>
+                            <a class="px-4 py-2 rounded-xl bg-surface-container-high text-on-surface text-sm font-semibold" href="{% url 'super_admin_doctor_reset_password' doctor.id %}">Mot de passe temporaire</a>
+                        </div>
                         <p class="text-on-surface-variant font-medium flex items-center">
                             <span class="material-symbols-outlined text-sm mr-2">stethoscope</span>
                             {{ doctor.specialite }}

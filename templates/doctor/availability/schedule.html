@@ -1,0 +1,90 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}HealthSync - Horaire Medecin{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8 space-y-8">
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-[0.3em] text-primary">Planning Hebdomadaire</p>
+            <h1 class="mt-2 text-4xl font-extrabold headline-font tracking-tight text-on-surface">{{ doctor_link.medecin.full_name|default:"Medecin" }}</h1>
+            <p class="mt-2 max-w-3xl text-sm text-on-surface-variant">Configuration des horaires pour {{ doctor_link.etablissement.nom }}.</p>
+        </div>
+        <div class="flex gap-3">
+            <a class="inline-flex items-center rounded-xl bg-surface-container-low px-5 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high" href="{% url 'doctor_availability' %}?facility={{ selected_facility_id }}">Retour</a>
+            <a class="inline-flex items-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90" href="{% url 'doctor_leaves' %}?facility={{ selected_facility_id }}">Conges</a>
+        </div>
+    </div>
+
+    <form class="grid grid-cols-1 gap-8 2xl:grid-cols-[minmax(0,1.45fr)_380px]" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="facility" value="{{ selected_facility_id }}">
+        <section class="rounded-[32px] bg-surface-container-lowest shadow-sm">
+            <div class="flex items-center justify-between border-b border-surface-container px-6 py-5">
+                <div>
+                    <h2 class="text-2xl font-bold headline-font tracking-tight text-on-surface">Jours de travail</h2>
+                    <p class="mt-1 text-sm text-on-surface-variant">Jusqu'a 3 intervalles par jour.</p>
+                </div>
+                <span class="rounded-full bg-primary-fixed/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">{{ doctor_link.etablissement.nom }}</span>
+            </div>
+            <div class="space-y-4 p-6">
+                {% for day in weekday_rows %}
+                <div class="rounded-[28px] border border-surface-container bg-surface p-5">
+                    <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                        <div class="flex min-w-0 flex-1 items-start gap-4">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-xs font-black text-slate-500 shadow-sm">{{ day.short }}</div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <h3 class="text-lg font-bold text-on-surface">{{ day.label }}</h3>
+                                    <label class="inline-flex items-center gap-2 rounded-full bg-surface-container-low px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-on-surface">
+                                        <input class="schedule-day-toggle h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary/20" data-day-code="{{ day.code }}" name="{{ day.code }}_enabled" type="checkbox" {% if day.is_active %}checked{% endif %}>
+                                        Active
+                                    </label>
+                                </div>
+                                <div class="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+                                    {% for interval in day.intervals %}
+                                    <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-surface-container">
+                                        <p class="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Creneau {{ interval.slot }}</p>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="mb-1 block text-xs font-semibold text-on-surface-variant">Debut</label>
+                                                <input class="w-full rounded-xl border-0 bg-surface-container-low px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20" name="{{ day.code }}_start_{{ interval.slot }}" type="time" value="{{ interval.start }}">
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-xs font-semibold text-on-surface-variant">Fin</label>
+                                                <input class="w-full rounded-xl border-0 bg-surface-container-low px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20" name="{{ day.code }}_end_{{ interval.slot }}" type="time" value="{{ interval.end }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="w-full xl:w-[280px]">
+                            <label class="mb-2 block text-sm font-semibold text-on-surface" for="{{ day.code }}_notes">Note</label>
+                            <textarea class="min-h-[132px] w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20" id="{{ day.code }}_notes" name="{{ day.code }}_notes">{{ day.notes }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <aside class="rounded-[32px] bg-surface-container-lowest shadow-sm">
+            <div class="border-b border-surface-container px-6 py-6">
+                <p class="text-xs font-bold uppercase tracking-[0.25em] text-primary">Configuration</p>
+                <h2 class="mt-2 text-2xl font-extrabold headline-font tracking-tight text-on-surface">Resume</h2>
+            </div>
+            <div class="space-y-5 p-6">
+                <div class="rounded-2xl bg-surface-container-low p-5 text-sm text-on-surface-variant">Activez uniquement les jours travailles et remplissez les intervalles utiles.</div>
+                <button class="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-primary to-primary-container px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-primary/20 transition hover:opacity-95" type="submit">Enregistrer l'horaire</button>
+            </div>
+        </aside>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin_availability_schedule.js' %}"></script>
+{% endblock %}

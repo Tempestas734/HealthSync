@@ -1,0 +1,43 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - {{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8">
+    <div class="max-w-4xl bg-surface-container-lowest rounded-2xl p-8 shadow-sm">
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-on-surface">{{ page_heading }}</h3>
+        </div>
+
+        <form class="space-y-6" method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <label class="block">
+                    <span class="text-sm font-semibold text-on-surface">Code</span>
+                    {{ form.code }}
+                    {% if form.code.errors %}<p class="mt-2 text-xs text-error">{{ form.code.errors.0 }}</p>{% endif %}
+                </label>
+                <label class="block">
+                    <span class="text-sm font-semibold text-on-surface">Nom</span>
+                    {{ form.nom }}
+                    {% if form.nom.errors %}<p class="mt-2 text-xs text-error">{{ form.nom.errors.0 }}</p>{% endif %}
+                </label>
+                <label class="block md:col-span-2">
+                    <span class="text-sm font-semibold text-on-surface">Description</span>
+                    {{ form.description }}
+                    {% if form.description.errors %}<p class="mt-2 text-xs text-error">{{ form.description.errors.0 }}</p>{% endif %}
+                </label>
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
+                <a class="px-4 py-2 rounded-xl bg-surface-container-high text-on-surface font-semibold text-sm" href="{% url 'super_admin_role_list' %}">Annuler</a>
+                <button class="px-5 py-2 rounded-xl bg-primary text-on-primary font-semibold text-sm shadow-lg shadow-primary/10" type="submit">{{ submit_label }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base/base.html" %}
+
+{% block title %}HealthSync - Patients{% endblock %}
+
+{% block content %}
+<div class="px-8 py-8 space-y-8">
+    <div class="flex justify-between items-end gap-4 flex-wrap">
+        <div>
+            <h2 class="text-3xl font-extrabold text-on-surface tracking-tight headline-font">Patients de l'etablissement</h2>
+            <p class="text-on-surface-variant mt-1">{{ patients_count }} patient{{ patients_count|pluralize }} pour {{ etablissement.nom }}.</p>
+        </div>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden">
+        <form class="p-6 flex flex-wrap gap-4 items-center bg-surface-container-lowest border-b border-surface-container" method="get">
+            <input class="bg-surface-container-low border-none rounded-lg text-sm font-medium py-2 px-4 focus:ring-1 focus:ring-primary/20 min-w-64" name="q" placeholder="Rechercher par nom, CIN / code patient, barcode, email ou telephone" type="text" value="{{ filters.q }}">
+            <select class="bg-surface-container-low border-none rounded-lg text-sm font-medium py-2 px-4 focus:ring-1 focus:ring-primary/20" name="status">
+                <option value="">Tous les statuts</option>
+                <option value="active" {% if filters.status == "active" %}selected{% endif %}>Actif</option>
+                <option value="inactive" {% if filters.status == "inactive" %}selected{% endif %}>Inactif</option>
+            </select>
+            <div class="ml-auto flex items-center gap-3">
+                <button class="flex items-center px-4 py-2 bg-primary text-on-primary rounded-lg transition-all text-sm font-medium" type="submit">Filtrer</button>
+                <a class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all text-sm font-medium" href="{% url 'admin_etablissement_patient_list' %}">Reinitialiser</a>
+            </div>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low">
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Patient</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Code</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Contact</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Sang</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Statut</th>
+                        <th class="py-4 px-6 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Creation</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container-low">
+                    {% for patient in patients %}
+                    <tr class="hover:bg-surface-container-low/50 transition-colors">
+                        <td class="py-5 px-6">
+                            <p class="text-sm font-bold text-on-surface">{{ patient.full_name }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ patient.date_of_birth|date:"d/m/Y"|default:"-" }}</p>
+                        </td>
+                        <td class="py-5 px-6">
+                            <p class="text-sm font-semibold text-on-surface">{{ patient.patient_code|default:"-" }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ patient.barcode_value }}</p>
+                            <p class="text-xs text-on-surface-variant">CIN / Code patient: {{ patient.patient_code|default:"-" }}</p>
+                        </td>
+                        <td class="py-5 px-6">
+                            <p class="text-sm text-on-surface">{{ patient.email|default:"-" }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ patient.phone|default:"-" }}</p>
+                        </td>
+                        <td class="py-5 px-6 text-sm text-on-surface">{{ patient.blood_group|default:"-" }}</td>
+                        <td class="py-5 px-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold {% if patient.is_active %}bg-secondary-container text-on-secondary-container{% else %}bg-error-container text-on-error-container{% endif %}">
+                                {% if patient.is_active %}Actif{% else %}Inactif{% endif %}
+                            </span>
+                        </td>
+                        <td class="py-5 px-6 text-sm text-on-surface-variant">{{ patient.created_at|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td class="px-6 py-10 text-center text-on-surface-variant" colspan="6">Aucun patient trouve.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
