@@ -50,8 +50,8 @@
 <script src="{% static 'js/asset_diagnostics.js' %}"></script>
 <link href="{% static 'css/login.css' %}" rel="stylesheet"/>
 </head>
-<body class="h-screen overflow-hidden bg-surface font-body text-on-surface">
-<div class="flex h-screen flex-col">
+<body class="min-h-screen overflow-x-hidden bg-surface font-body text-on-surface">
+<div class="flex min-h-screen flex-col">
 <nav class="flex w-full items-center justify-between bg-slate-50 px-6 py-4">
 <div class="flex items-center gap-3">
 <span class="font-headline text-2xl font-black tracking-tighter text-blue-800">HealthSync</span>
@@ -67,7 +67,52 @@
 <div class="absolute left-20 top-20 h-64 w-64 rounded-full bg-primary-fixed/20 blur-[100px]"></div>
 <div class="absolute bottom-20 right-20 h-96 w-96 rounded-full bg-secondary-container/20 blur-[120px]"></div>
 
-<div class="relative z-10 w-full max-w-md">
+<div class="relative z-10 w-full max-w-6xl">
+<div class="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,420px)]">
+<section class="glass-panel rounded-[28px] border border-white/60 bg-white/80 p-8 shadow-[0_40px_100px_-20px_rgba(0,72,141,0.12)] backdrop-blur">
+<div class="max-w-2xl">
+<p class="inline-flex items-center rounded-full bg-blue-50 px-4 py-1 text-xs font-bold uppercase tracking-[0.25em] text-blue-800">Health Professional Portal</p>
+<h1 class="mt-5 font-headline text-4xl font-extrabold tracking-tight text-slate-900">Connexion clinique et revue des captures borne par PIN session.</h1>
+<p class="mt-4 max-w-xl text-sm leading-7 text-slate-600">Choose patient code - Generate 6-digit PIN - Use PIN in kiosk app - Activate measurement session.</p>
+</div>
+
+<div class="mt-8 grid gap-4 md:grid-cols-3">
+<article class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+<p class="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">1. Ouvrir</p>
+<h2 class="mt-2 text-lg font-extrabold text-slate-900">Portail dedie</h2>
+<p class="mt-2 text-sm leading-6 text-slate-600">Le medecin ou l'infirmier accede au portail Health Professional depuis le web.</p>
+</article>
+<article class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+<p class="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">2. Saisir</p>
+<h2 class="mt-2 text-lg font-extrabold text-slate-900">Code patient</h2>
+<p class="mt-2 text-sm leading-6 text-slate-600">Le professionnel choisit le patient avec son code patient ou son barcode.</p>
+</article>
+<article class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+<p class="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">3. Activer</p>
+<h2 class="mt-2 text-lg font-extrabold text-slate-900">PIN et activation</h2>
+<p class="mt-2 text-sm leading-6 text-slate-600">Le portail genere un code PIN de 6 chiffres a utiliser dans l'application kiosk.</p>
+</article>
+</div>
+
+<div class="mt-8 rounded-[28px] bg-slate-900 p-6 text-white shadow-[0_30px_70px_-30px_rgba(15,23,42,0.7)]">
+<div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+<div class="max-w-2xl">
+<p class="text-xs font-bold uppercase tracking-[0.28em] text-sky-200">Flux Health Staff / Health Professional</p>
+<p class="mt-3 text-sm leading-7 text-slate-200">Le professionnel recherche le patient par code, genere un PIN temporaire a 6 chiffres, puis utilise ce PIN dans l'application kiosk pour activer la session de mesure.</p>
+</div>
+<form action="{% url 'health_professional_session_lookup' %}" class="w-full max-w-sm rounded-3xl bg-white/10 p-4 backdrop-blur" method="post">
+{% csrf_token %}
+<label class="block text-xs font-bold uppercase tracking-[0.24em] text-sky-100" for="session-pin-quick-access">Code patient</label>
+<div class="mt-3 flex gap-3">
+<input class="min-w-0 flex-1 rounded-2xl border border-white/15 bg-white px-4 py-3 font-mono text-base font-bold uppercase text-slate-900 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-sky-300" id="session-pin-quick-access" maxlength="64" name="patient_code" placeholder="PAT-001" type="text"/>
+<button class="rounded-2xl bg-sky-300 px-5 py-3 text-sm font-extrabold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-sky-200" type="submit">Generer</button>
+</div>
+<p class="mt-3 text-xs text-slate-300">Le code PIN genere sera utilise dans l'autre application pour lancer la session kiosk.</p>
+</form>
+</div>
+</div>
+</section>
+
 <div class="glass-panel rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-7 shadow-[0_40px_100px_-20px_rgba(0,72,141,0.06)]">
 <div class="mb-8 text-center">
 <h1 class="mb-2 font-headline text-3xl font-extrabold tracking-tight text-primary">Secure Access</h1>
@@ -117,13 +162,7 @@
 
 <div class="mt-8 flex items-center justify-center gap-6 border-t border-outline-variant/10 pt-6 opacity-60 grayscale">
 <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-<span class="material-symbols-outlined text-base">verified_user</span>
-                        HIPAA compliant
-                    </div>
-<div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-<span class="material-symbols-outlined text-base">security</span>
-                        AES-256 Encrypted
-                    </div>
+</div>
 </div>
 </div>
 </div>

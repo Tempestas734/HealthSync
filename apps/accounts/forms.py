@@ -113,6 +113,25 @@ def _slug_code_part(value, fallback):
     return letters_only[:3].ljust(3, "X")
 
 
+class HealthProfessionalSessionCreateForm(forms.Form):
+    patient_code = forms.CharField(
+        max_length=64,
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-2 w-full rounded-xl border-0 bg-surface-container-low px-4 py-3 font-mono uppercase focus:ring-2 focus:ring-primary/20",
+                "placeholder": "PAT-001 ou barcode",
+                "autocomplete": "off",
+            }
+        ),
+    )
+
+    def clean_patient_code(self):
+        patient_code = (self.cleaned_data.get("patient_code") or "").strip().upper()
+        if not patient_code:
+            raise forms.ValidationError("Le code patient est obligatoire.")
+        return patient_code
+
+
 class AppUserForm(forms.ModelForm):
     password = forms.CharField(
         required=False,

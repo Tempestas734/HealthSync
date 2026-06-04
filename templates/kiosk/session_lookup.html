@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HealthSync - Generation PIN Session</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body class="min-h-screen bg-slate-950 font-[Inter] text-slate-100">
+<main class="relative isolate overflow-hidden">
+<div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.22),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.18),_transparent_28%)]"></div>
+<div class="relative mx-auto flex min-h-screen max-w-6xl items-center px-4 py-10">
+<div class="grid w-full gap-6 lg:grid-cols-[minmax(0,1.05fr)_420px]">
+<section class="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur">
+<p class="inline-flex rounded-full border border-sky-300/30 bg-sky-300/10 px-4 py-1 text-xs font-bold uppercase tracking-[0.28em] text-sky-200">Health Professional</p>
+<h1 class="mt-5 font-[Manrope] text-4xl font-extrabold tracking-tight text-white">Generer un PIN de 6 chiffres pour activer une session kiosk.</h1>
+<p class="mt-4 max-w-2xl text-sm leading-7 text-slate-300">Le professionnel choisit le patient par son code patient ou son barcode. Le portail genere ensuite un PIN temporaire a transmettre a l'autre application pour ouvrir la session de mesure.</p>
+
+<div class="mt-8 grid gap-4 md:grid-cols-3">
+<div class="rounded-3xl border border-white/10 bg-white/5 p-5">
+<p class="text-xs font-bold uppercase tracking-[0.25em] text-sky-200">1. Rechercher</p>
+<p class="mt-2 text-sm leading-6 text-slate-300">Saisir le code patient ou le barcode deja enregistre dans HealthSync.</p>
+</div>
+<div class="rounded-3xl border border-white/10 bg-white/5 p-5">
+<p class="text-xs font-bold uppercase tracking-[0.25em] text-sky-200">2. Generer</p>
+<p class="mt-2 text-sm leading-6 text-slate-300">Le systeme produit un code PIN unique a 6 chiffres avec expiration.</p>
+</div>
+<div class="rounded-3xl border border-white/10 bg-white/5 p-5">
+<p class="text-xs font-bold uppercase tracking-[0.25em] text-sky-200">3. Activer</p>
+<p class="mt-2 text-sm leading-6 text-slate-300">Le PIN est saisi dans l'autre application pour activer la session kiosk du patient.</p>
+</div>
+</div>
+</section>
+
+<section class="rounded-[32px] bg-white p-8 text-slate-900 shadow-2xl">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-xs font-bold uppercase tracking-[0.28em] text-slate-500">Session PIN Generator</p>
+<h2 class="mt-2 font-[Manrope] text-3xl font-extrabold tracking-tight">Choisir le patient</h2>
+</div>
+<a class="text-sm font-semibold text-sky-700 hover:text-sky-900" href="{% url 'login' %}">Connexion admin</a>
+</div>
+
+{% for message in messages %}
+<div class="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ message }}</div>
+{% endfor %}
+
+<form class="mt-8 space-y-5" method="post">
+{% csrf_token %}
+{% if session_create_form.non_field_errors %}
+<div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+{% for error in session_create_form.non_field_errors %}
+<p>{{ error }}</p>
+{% endfor %}
+</div>
+{% endif %}
+<div>
+<label class="text-sm font-bold uppercase tracking-[0.18em] text-slate-500" for="{{ session_create_form.patient_code.id_for_label }}">Code patient</label>
+{{ session_create_form.patient_code }}
+{% if session_create_form.patient_code.errors %}<p class="mt-2 text-sm text-rose-600">{{ session_create_form.patient_code.errors.0 }}</p>{% endif %}
+</div>
+<button class="w-full rounded-2xl bg-slate-950 px-5 py-3.5 font-[Manrope] text-lg font-extrabold text-white transition hover:bg-slate-800" type="submit">Generer le PIN</button>
+</form>
+
+{% if generated_activation %}
+<div class="mt-8 rounded-[28px] bg-slate-950 p-6 text-white">
+<p class="text-xs font-bold uppercase tracking-[0.24em] text-sky-200">PIN genere</p>
+<p class="mt-3 font-mono text-5xl font-black tracking-[0.35em] text-sky-300">{{ generated_activation.session_pin }}</p>
+<p class="mt-4 text-sm leading-7 text-slate-300">Utilisez ce code dans l'autre application pour activer la session kiosk du patient selectionne.</p>
+<div class="mt-5 grid gap-3 rounded-3xl bg-white/10 p-4 text-sm text-slate-100">
+<p>Patient: <span class="font-semibold">{{ patient_context.full_name }}</span></p>
+<p>Code patient: <span class="font-semibold">{{ patient_context.patient_code }}</span></p>
+<p>Barcode: <span class="font-semibold">{{ patient_context.barcode_value }}</span></p>
+<p>Expiration: <span class="font-semibold">{{ generated_activation.expires_at|date:"d/m/Y H:i" }}</span></p>
+<p>Statut: <span class="font-semibold">{{ generated_activation.status_display_name }}</span></p>
+</div>
+</div>
+{% endif %}
+</section>
+</div>
+</div>
+</main>
+</body>
+</html>

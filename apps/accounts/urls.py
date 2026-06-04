@@ -30,6 +30,8 @@ from .views import (
     doctor_patient_list,
     doctor_schedule,
     forbidden_view,
+    health_professional_session_detail,
+    health_professional_session_lookup,
     login_view,
     logout_view,
     setup_password_view,
@@ -65,6 +67,8 @@ from .views import (
 
 urlpatterns = [
     path("activate-account/", activate_account_view, name="activate_account"),
+    path("health-professional/session/", health_professional_session_lookup, name="health_professional_session_lookup"),
+    path("health-professional/session/<str:session_pin>/", health_professional_session_detail, name="health_professional_session_detail"),
     path("login/", login_view, name="login"),
     path("setup-password/", setup_password_view, name="setup_password"),
     path("logout/", logout_view, name="logout"),

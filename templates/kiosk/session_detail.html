@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HealthSync - Session {{ kiosk_session.session_pin }}</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body class="min-h-screen bg-slate-100 font-[Inter] text-slate-900">
+<main class="mx-auto max-w-6xl px-4 py-8">
+<div class="flex flex-col gap-4 rounded-[32px] bg-slate-950 px-8 py-7 text-white shadow-2xl lg:flex-row lg:items-end lg:justify-between">
+<div>
+<p class="text-xs font-bold uppercase tracking-[0.28em] text-sky-200">Health Professional Session</p>
+<h1 class="mt-3 font-[Manrope] text-4xl font-extrabold tracking-tight">PIN {{ kiosk_session.session_pin }}</h1>
+<p class="mt-3 max-w-2xl text-sm leading-7 text-slate-300">Le portail reprend l'etat d'avancement de la borne, les donnees patient associees a la session et les mesures capturees pour la revue clinique.</p>
+</div>
+<form action="{% url 'health_professional_session_lookup' %}" class="w-full max-w-sm rounded-3xl bg-white/10 p-4 backdrop-blur" method="get">
+<label class="block text-xs font-bold uppercase tracking-[0.22em] text-sky-100" for="session-pin-search">Rechercher un autre PIN</label>
+<div class="mt-3 flex gap-3">
+<input class="min-w-0 flex-1 rounded-2xl border border-white/15 bg-white px-4 py-3 font-mono text-lg font-bold tracking-[0.35em] text-slate-900 outline-none focus:ring-2 focus:ring-sky-300" id="session-pin-search" inputmode="numeric" maxlength="6" name="session_pin" value="{{ kiosk_session.session_pin }}" type="text"/>
+<button class="rounded-2xl bg-sky-300 px-5 py-3 text-sm font-extrabold uppercase tracking-[0.18em] text-slate-950 transition hover:bg-sky-200" type="submit">Ouvrir</button>
+</div>
+</form>
+</div>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_360px]">
+<section class="space-y-6">
+<div class="rounded-[28px] bg-white p-6 shadow-sm">
+<div class="flex flex-wrap items-center gap-3">
+<span class="rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-sky-800">{{ kiosk_session.status_display_name }}</span>
+{% if kiosk_session.is_active %}
+<span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-amber-800">Capture en cours</span>
+{% endif %}
+{% if kiosk_session.is_completed %}
+<span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-emerald-800">Resultat disponible</span>
+{% endif %}
+</div>
+
+<div class="mt-5 grid gap-4 md:grid-cols-2">
+<div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+<p class="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Patient</p>
+<p class="mt-2 text-2xl font-extrabold text-slate-900">{{ patient_context.full_name }}</p>
+<div class="mt-4 space-y-2 text-sm text-slate-600">
+<p>Code patient: <span class="font-semibold text-slate-900">{{ patient_context.patient_code }}</span></p>
+<p>Barcode: <span class="font-semibold text-slate-900">{{ patient_context.barcode_value }}</span></p>
+<p>Genre: <span class="font-semibold text-slate-900">{{ patient_context.gender }}</span></p>
+<p>Telephone: <span class="font-semibold text-slate-900">{{ patient_context.phone }}</span></p>
+<p>Date de naissance: <span class="font-semibold text-slate-900">{{ patient_context.date_of_birth|default:"-" }}</span></p>
+</div>
+</div>
+
+<div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+<p class="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Session</p>
+<div class="mt-4 space-y-2 text-sm text-slate-600">
+<p>Etablissement: <span class="font-semibold text-slate-900">{{ kiosk_session.patient.etablissement.nom|default:"-" }}</span></p>
+<p>Device ID: <span class="font-semibold text-slate-900">{{ kiosk_session.device_id|default:"-" }}</span></p>
+<p>Creation: <span class="font-semibold text-slate-900">{{ kiosk_session.created_at|date:"d/m/Y H:i"|default:"-" }}</span></p>
+<p>RFID: <span class="font-semibold text-slate-900">{{ kiosk_session.rfid_tag_uid|default:"-" }}</span></p>
+{% if latest_vital_sign %}
+<p>Derniere mesure: <span class="font-semibold text-slate-900">{{ latest_vital_sign.measured_at|date:"d/m/Y H:i" }}</span></p>
+{% endif %}
+</div>
+</div>
+</div>
+</div>
+
+<div class="rounded-[28px] bg-white p-6 shadow-sm">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Mesures capturees</p>
+<h2 class="mt-2 font-[Manrope] text-2xl font-extrabold tracking-tight text-slate-900">Suivi temps reel</h2>
+</div>
+</div>
+
+<div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+{% for row in measurement_rows %}
+<article class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+<p class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">{{ row.label }}</p>
+<p class="mt-3 text-2xl font-extrabold text-slate-900">{{ row.display_value }}</p>
+</article>
+{% endfor %}
+</div>
+</div>
+</section>
+
+<aside class="space-y-6">
+<div class="rounded-[28px] bg-white p-6 shadow-sm">
+<p class="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Etat</p>
+{% if kiosk_session.is_completed %}
+<h2 class="mt-2 font-[Manrope] text-2xl font-extrabold tracking-tight text-slate-900">Session terminee</h2>
+<p class="mt-3 text-sm leading-7 text-slate-600">La borne a finalise la capture. Le professionnel peut consulter le resultat detaille et poursuivre la prise en charge.</p>
+{% else %}
+<h2 class="mt-2 font-[Manrope] text-2xl font-extrabold tracking-tight text-slate-900">Capture encore en cours</h2>
+<p class="mt-3 text-sm leading-7 text-slate-600">Le portail affiche les informations disponibles. Attendez la finalisation cote borne pour la synthese complete.</p>
+{% endif %}
+</div>
+
+<div class="rounded-[28px] bg-white p-6 shadow-sm">
+<p class="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Synthese finale</p>
+<div class="mt-3 rounded-3xl bg-slate-50 p-5 text-sm leading-7 text-slate-700">
+{% if result_summary %}
+{{ result_summary }}
+{% else %}
+La synthese finale n'est pas encore disponible pour cette session.
+{% endif %}
+</div>
+
+{% if result_recommendations %}
+<div class="mt-4">
+<p class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Recommandations</p>
+<ul class="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+{% for recommendation in result_recommendations %}
+<li class="rounded-2xl bg-slate-50 px-4 py-3">{{ recommendation }}</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+</div>
+</aside>
+</div>
+</main>
+</body>
+</html>

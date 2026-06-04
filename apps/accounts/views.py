@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth.hashers import check_password
 from django.http import HttpResponseNotAllowed, JsonResponse
 from django.contrib.auth.hashers import make_password
+from django.db import connection
 from django.db import transaction
 from django.db.models import Count
 from django.db.models import F
@@ -18,7 +19,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.db import IntegrityError
+from django.db import IntegrityError, OperationalError, ProgrammingError
 
 from .decorators import login_required
 from .decorators import role_required
@@ -27,6 +28,7 @@ from .forms import (
     DoctorAccountLinkForm,
     DoctorInvitationDecisionForm,
     EtablissementForm,
+    HealthProfessionalSessionCreateForm,
     MedecinPresenceForm,
     MedecinEtablissementInvitationForm,
     MedecinIndisponibiliteForm,
@@ -39,7 +41,7 @@ from .forms import (
 )
 from .models import AppUser
 from .models import ETABLISSEMENT_TYPE_LABELS
-from .models import Appointment, Etablissement, Medecin, MedecinEtablissement, MedecinEtablissementInvitation, MedecinHoraireIntervalle, MedecinHoraireSemaine, MedecinIndisponibilite, MedecinPresence, Patient, PatientVitalSign, PersonnelEtablissement, PersonnelEtablissementPermission, Role
+from .models import Appointment, Etablissement, ExamSession, ExamSessionActivationPin, Medecin, MedecinEtablissement, MedecinEtablissementInvitation, MedecinHoraireIntervalle, MedecinHoraireSemaine, MedecinIndisponibilite, MedecinPresence, Patient, PatientVitalSign, PersonnelEtablissement, PersonnelEtablissementPermission, Role
 from .services import SupabaseAdminError, SupabaseAdminService
 
 ADMIN_ETABLISSEMENT_STAFF_ROLE_CODES = (
@@ -180,6 +182,183 @@ def logout_view(request):
     request.session.flush()
     messages.success(request, "Session closed successfully.")
     return redirect("login")
+
+
+def _build_exam_session_patient_context(exam_session):
+    patient = exam_session.patient
+    full_name = patient.full_name if patient else ""
+
+    return {
+        "full_name": full_name or "-",
+        "patient_code": getattr(patient, "patient_code", None) or "-",
+        "barcode_value": getattr(patient, "barcode_value", None) or "-",
+        "date_of_birth": getattr(patient, "date_of_birth", None),
+        "gender": getattr(patient, "gender", None) or "-",
+        "phone": getattr(patient, "phone", None) or "-",
+    }
+
+
+def _build_patient_context_from_patient(patient):
+    return {
+        "full_name": patient.full_name or "-",
+        "patient_code": patient.patient_code or "-",
+        "barcode_value": patient.barcode_value or "-",
+        "date_of_birth": patient.date_of_birth,
+        "gender": patient.gender or "-",
+        "phone": patient.phone or "-",
+    }
+
+
+def _build_exam_session_measurement_rows(latest_vital_sign):
+    systolic_bp = getattr(latest_vital_sign, "systolic_bp", None)
+    diastolic_bp = getattr(latest_vital_sign, "diastolic_bp", None)
+    blood_pressure = None
+    if systolic_bp is not None or diastolic_bp is not None:
+        blood_pressure = f"{systolic_bp or '-'} / {diastolic_bp or '-'} mmHg"
+
+    rows = [
+        {"label": "Temperature", "value": getattr(latest_vital_sign, "temperature_c", None), "unit": "degC"},
+        {"label": "Frequence cardiaque", "value": getattr(latest_vital_sign, "heart_rate_bpm", None), "unit": "bpm"},
+        {"label": "SpO2", "value": getattr(latest_vital_sign, "spo2_percent", None), "unit": "%"},
+        {"label": "Tension arterielle", "value": blood_pressure, "unit": ""},
+        {"label": "Frequence respiratoire", "value": getattr(latest_vital_sign, "respiratory_rate_bpm", None), "unit": "rpm"},
+        {"label": "Poids", "value": getattr(latest_vital_sign, "weight_kg", None), "unit": "kg"},
+        {"label": "Taille", "value": getattr(latest_vital_sign, "height_cm", None), "unit": "cm"},
+        {"label": "Glycemie", "value": getattr(latest_vital_sign, "blood_glucose_mg_dl", None), "unit": "mg/dL"},
+    ]
+
+    for row in rows:
+        if row["value"] in (None, ""):
+            row["display_value"] = "En attente"
+        elif row["unit"]:
+            row["display_value"] = f"{row['value']} {row['unit']}"
+        else:
+            row["display_value"] = str(row["value"])
+    return rows
+
+
+def _generate_unique_activation_pin():
+    for _ in range(20):
+        candidate = f"{secrets.randbelow(1000000):06d}"
+        if not ExamSessionActivationPin.objects.filter(session_pin=candidate).exists():
+            return candidate
+    raise RuntimeError("Impossible de generer un PIN unique.")
+
+
+def _db_table_exists(table_name):
+    try:
+        with connection.cursor() as cursor:
+            return table_name in connection.introspection.table_names(cursor)
+    except (ProgrammingError, OperationalError):
+        return False
+
+
+def health_professional_session_lookup(request):
+    form = HealthProfessionalSessionCreateForm(request.POST or None)
+    generated_activation = None
+    patient_context = None
+
+    if request.method == "POST" and form.is_valid():
+        if not _db_table_exists(ExamSessionActivationPin._meta.db_table):
+            form.add_error(
+                None,
+                "La table des PIN de session n'existe pas encore. Appliquez le script SQL `create_exam_session_activation_pins.sql`.",
+            )
+            return render(
+                request,
+                "kiosk/session_lookup.html",
+                {
+                    "session_create_form": form,
+                    "generated_activation": generated_activation,
+                    "patient_context": patient_context,
+                },
+            )
+
+        patient_code = form.cleaned_data["patient_code"]
+        patient = (
+            Patient.objects.select_related("etablissement")
+            .filter(Q(patient_code__iexact=patient_code) | Q(barcode_value__iexact=patient_code))
+            .order_by("-created_at")
+            .first()
+        )
+        if not patient:
+            form.add_error("patient_code", "Aucun patient ne correspond a ce code.")
+        else:
+            try:
+                now = timezone.now()
+                ExamSessionActivationPin.objects.filter(patient=patient, status="pending").update(
+                    status="expired",
+                    updated_at=now,
+                )
+                created_by_user_id = request.session.get("user_id") or None
+                generated_activation = ExamSessionActivationPin.objects.create(
+                    patient=patient,
+                    created_by_user_id=created_by_user_id,
+                    session_pin=_generate_unique_activation_pin(),
+                    status="pending",
+                    expires_at=now + timedelta(minutes=30),
+                    created_at=now,
+                    updated_at=now,
+                )
+                patient_context = _build_patient_context_from_patient(patient)
+            except (ProgrammingError, OperationalError):
+                form.add_error(
+                    None,
+                    "La table des PIN de session n'existe pas encore. Appliquez le script SQL `create_exam_session_activation_pins.sql`.",
+                )
+
+    return render(
+        request,
+        "kiosk/session_lookup.html",
+        {
+            "session_create_form": form,
+            "generated_activation": generated_activation,
+            "patient_context": patient_context,
+        },
+    )
+
+
+def health_professional_session_detail(request, session_pin):
+    normalized_pin = "".join(char for char in (session_pin or "") if char.isdigit())
+    if len(normalized_pin) != 6:
+        messages.error(request, "Le PIN session doit contenir exactement 6 chiffres.")
+        return redirect("health_professional_session_lookup")
+
+    exam_session = None
+    candidate_sessions = (
+        ExamSession.objects.select_related("patient", "patient__etablissement")
+        .filter(status__in=["active", "completed", "cancelled", "expired"])
+        .order_by("-created_at")[:250]
+    )
+    for candidate in candidate_sessions:
+        if candidate.session_pin == normalized_pin:
+            exam_session = candidate
+            break
+
+    if not exam_session:
+        messages.error(request, "Aucune session active ou recente ne correspond a ce PIN.")
+        return redirect("health_professional_session_lookup")
+
+    latest_vital_sign = (
+        PatientVitalSign.objects.filter(exam_session_id=exam_session.id).order_by("-measured_at", "-created_at").first()
+    )
+    result_summary = getattr(latest_vital_sign, "notes", None)
+    if not result_summary:
+        result_summary = "La session est disponible. Les mesures ci-dessous correspondent aux captures deja enregistrees pour cette session."
+
+    return render(
+        request,
+        "kiosk/session_detail.html",
+        {
+            "kiosk_session": exam_session,
+            "patient_context": _build_exam_session_patient_context(exam_session),
+            "measurement_rows": _build_exam_session_measurement_rows(latest_vital_sign),
+            "latest_vital_sign": latest_vital_sign,
+            "result_summary": result_summary,
+            "result_recommendations": [],
+            "session_create_form": HealthProfessionalSessionCreateForm(),
+        },
+    )
 
 
 @login_required

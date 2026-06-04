@@ -25,6 +25,10 @@
             <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'super_admin_role_list' or request.resolver_match.url_name == 'super_admin_role_create' or request.resolver_match.url_name == 'super_admin_role_edit' %}fill-icon{% endif %}">badge</span>
             <span class="font-medium">Roles</span>
         </a>
+        <a class="{% if request.resolver_match.url_name == 'health_professional_session_lookup' or request.resolver_match.url_name == 'health_professional_session_detail' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'health_professional_session_lookup' %}">
+            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'health_professional_session_lookup' or request.resolver_match.url_name == 'health_professional_session_detail' %}fill-icon{% endif %}">monitor_heart</span>
+            <span class="font-medium">Session de mesure</span>
+        </a>
         <form action="{% url 'logout' %}" class="mx-2" method="post">
             {% csrf_token %}
             <button class="flex w-full items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md transition-all duration-200" type="submit">
@@ -90,6 +94,10 @@
             <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'admin_etablissement_availability' or request.resolver_match.url_name == 'admin_etablissement_doctor_leaves' or request.resolver_match.url_name == 'admin_etablissement_doctor_schedule' or request.resolver_match.url_name == 'admin_etablissement_doctor_calendar' %}fill-icon{% endif %}">calendar_today</span>
             <span class="font-medium">Disponibilites</span>
         </a>
+        <a class="{% if request.resolver_match.url_name == 'health_professional_session_lookup' or request.resolver_match.url_name == 'health_professional_session_detail' %}flex items-center text-primary font-bold bg-surface-container-lowest rounded-l-full ml-4 pl-4 py-3 transition-all duration-200{% else %}flex items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md mx-2 transition-all duration-200{% endif %}" href="{% url 'health_professional_session_lookup' %}">
+            <span class="material-symbols-outlined mr-4 {% if request.resolver_match.url_name == 'health_professional_session_lookup' or request.resolver_match.url_name == 'health_professional_session_detail' %}fill-icon{% endif %}">monitor_heart</span>
+            <span class="font-medium">Session de mesure</span>
+        </a>
         <form action="{% url 'logout' %}" class="mx-2" method="post">
             {% csrf_token %}
             <button class="flex w-full items-center text-on-surface-variant hover:text-on-surface px-8 py-3 hover:bg-surface-container-high rounded-md transition-all duration-200" type="submit">
@@ -140,6 +148,10 @@
             <a class="{% if request.resolver_match.url_name == 'doctor_calendar' %}flex items-center gap-3 px-4 py-3 text-primary border-r-4 border-primary bg-white font-medium transition-all duration-300 ease-out{% else %}flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary hover:bg-primary-fixed/30 transition-all duration-300 ease-out font-medium{% endif %}" href="{% url 'doctor_calendar' %}">
                 <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'doctor_calendar' %}fill-icon{% endif %}">calendar_view_month</span>
                 <span>Calendrier Global</span>
+            </a>
+            <a class="{% if request.resolver_match.url_name == 'health_professional_session_lookup' or request.resolver_match.url_name == 'health_professional_session_detail' %}flex items-center gap-3 px-4 py-3 text-primary border-r-4 border-primary bg-white font-medium transition-all duration-300 ease-out{% else %}flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary hover:bg-primary-fixed/30 transition-all duration-300 ease-out font-medium{% endif %}" href="{% url 'health_professional_session_lookup' %}">
+                <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'health_professional_session_lookup' or request.resolver_match.url_name == 'health_professional_session_detail' %}fill-icon{% endif %}">monitor_heart</span>
+                <span>Session de mesure</span>
             </a>
             <div class="pt-3">
                 <div class="px-4 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Etablissements Lies</div>
@@ -224,6 +236,10 @@
             <span>Appointments</span>
         </a>
         {% endif %}
+        <a class="{% if request.resolver_match.url_name == 'health_professional_session_lookup' or request.resolver_match.url_name == 'health_professional_session_detail' %}flex items-center gap-3 bg-primary-fixed/40 text-primary rounded-lg py-3 px-4 font-bold transition-transform duration-200 hover:translate-x-1{% else %}flex items-center gap-3 text-on-surface-variant py-3 px-4 hover:bg-surface-container-low rounded-lg transition-transform duration-200 hover:translate-x-1{% endif %}" href="{% url 'health_professional_session_lookup' %}">
+            <span class="material-symbols-outlined {% if request.resolver_match.url_name == 'health_professional_session_lookup' or request.resolver_match.url_name == 'health_professional_session_detail' %}fill-icon{% endif %}">monitor_heart</span>
+            <span>Session de mesure</span>
+        </a>
         <a class="flex items-center gap-3 text-on-surface-variant py-3 px-4 hover:bg-surface-container-low rounded-lg transition-transform duration-200 hover:translate-x-1" href="#">
             <span class="material-symbols-outlined">apartment</span>
             <span>Facility Registry</span>
@@ -266,6 +282,7 @@
         <a class="text-lg font-black text-primary headline-font" href="{% url 'dashboard' %}">HealthSync</a>
         <div class="flex items-center gap-4 text-sm">
             <a class="text-on-surface-variant hover:text-primary transition-colors" href="{% url 'dashboard' %}">Dashboard</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors" href="{% url 'health_professional_session_lookup' %}">Session de mesure</a>
             {% if request.session.user_id %}
             <form action="{% url 'logout' %}" method="post">
                 {% csrf_token %}
