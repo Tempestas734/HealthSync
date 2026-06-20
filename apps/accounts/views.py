@@ -3,12 +3,13 @@ import json
 import requests
 import secrets
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone as dt_timezone
 
 from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
+from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseNotAllowed, JsonResponse
 from django.contrib.auth.hashers import make_password
 from django.db import connection
@@ -41,7 +42,7 @@ from .forms import (
 )
 from .models import AppUser
 from .models import ETABLISSEMENT_TYPE_LABELS
-from .models import Appointment, Etablissement, ExamSession, ExamSessionActivationPin, Medecin, MedecinEtablissement, MedecinEtablissementInvitation, MedecinHoraireIntervalle, MedecinHoraireSemaine, MedecinIndisponibilite, MedecinPresence, Patient, PatientVitalSign, PersonnelEtablissement, PersonnelEtablissementPermission, Role
+from .models import Appointment, Etablissement, ExamSession, Measurement, Medecin, MedecinEtablissement, MedecinEtablissementInvitation, MedecinHoraireIntervalle, MedecinHoraireSemaine, MedecinIndisponibilite, MedecinPresence, Patient, PatientVitalSign, PersonnelEtablissement, PersonnelEtablissementPermission, Role
 from .services import SupabaseAdminError, SupabaseAdminService
 
 ADMIN_ETABLISSEMENT_STAFF_ROLE_CODES = (
@@ -210,21 +211,19 @@ def _build_patient_context_from_patient(patient):
 
 
 def _build_exam_session_measurement_rows(latest_vital_sign):
-    systolic_bp = getattr(latest_vital_sign, "systolic_bp", None)
-    diastolic_bp = getattr(latest_vital_sign, "diastolic_bp", None)
-    blood_pressure = None
-    if systolic_bp is not None or diastolic_bp is not None:
-        blood_pressure = f"{systolic_bp or '-'} / {diastolic_bp or '-'} mmHg"
+    if isinstance(latest_vital_sign, dict):
+        height_value = latest_vital_sign.get("height_cm")
+        heart_rate_value = latest_vital_sign.get("heart_rate_bpm")
+        spo2_value = latest_vital_sign.get("spo2_percent")
+    else:
+        height_value = getattr(latest_vital_sign, "height_cm", None)
+        heart_rate_value = getattr(latest_vital_sign, "heart_rate_bpm", None)
+        spo2_value = getattr(latest_vital_sign, "spo2_percent", None)
 
     rows = [
-        {"label": "Temperature", "value": getattr(latest_vital_sign, "temperature_c", None), "unit": "degC"},
-        {"label": "Frequence cardiaque", "value": getattr(latest_vital_sign, "heart_rate_bpm", None), "unit": "bpm"},
-        {"label": "SpO2", "value": getattr(latest_vital_sign, "spo2_percent", None), "unit": "%"},
-        {"label": "Tension arterielle", "value": blood_pressure, "unit": ""},
-        {"label": "Frequence respiratoire", "value": getattr(latest_vital_sign, "respiratory_rate_bpm", None), "unit": "rpm"},
-        {"label": "Poids", "value": getattr(latest_vital_sign, "weight_kg", None), "unit": "kg"},
-        {"label": "Taille", "value": getattr(latest_vital_sign, "height_cm", None), "unit": "cm"},
-        {"label": "Glycemie", "value": getattr(latest_vital_sign, "blood_glucose_mg_dl", None), "unit": "mg/dL"},
+        {"key": "height", "label": "Taille", "value": height_value, "unit": "cm"},
+        {"key": "heart_rate", "label": "Frequence cardiaque", "value": heart_rate_value, "unit": "bpm"},
+        {"key": "spo2", "label": "SpO2", "value": spo2_value, "unit": "%"},
     ]
 
     for row in rows:
@@ -234,15 +233,213 @@ def _build_exam_session_measurement_rows(latest_vital_sign):
             row["display_value"] = f"{row['value']} {row['unit']}"
         else:
             row["display_value"] = str(row["value"])
+        row["is_ready"] = row["value"] not in (None, "")
     return rows
 
 
-def _generate_unique_activation_pin():
+def _get_raw_measurement_snapshot(exam_session_id):
+    measurements = list(
+        Measurement.objects.filter(session_id=exam_session_id, type__in=["height", "height_cm", "heart_rate", "spo2"]).order_by(
+            "-measured_at", "-id"
+        )
+    )
+
+    if not measurements:
+        return None
+
+    values = {
+        "height_cm": None,
+        "heart_rate_bpm": None,
+        "spo2_percent": None,
+        "measured_at": None,
+    }
+
+    for measurement in measurements:
+        measurement_type = (measurement.type or "").strip().lower()
+        if values["measured_at"] is None:
+            values["measured_at"] = measurement.measured_at
+
+        if measurement_type in {"height", "height_cm"} and values["height_cm"] is None:
+            values["height_cm"] = measurement.value
+        elif measurement_type == "heart_rate" and values["heart_rate_bpm"] is None:
+            values["heart_rate_bpm"] = measurement.value
+        elif measurement_type == "spo2" and values["spo2_percent"] is None:
+            values["spo2_percent"] = measurement.value
+
+    if values["height_cm"] is None and values["heart_rate_bpm"] is None and values["spo2_percent"] is None:
+        return None
+
+    return values
+
+
+def _get_exam_session_measurement_snapshot(exam_session):
+    return _get_raw_measurement_snapshot(exam_session.id)
+
+
+def _get_measurement_snapshot_measured_at(snapshot):
+    if isinstance(snapshot, dict):
+        return snapshot.get("measured_at")
+    return getattr(snapshot, "measured_at", None)
+
+
+def _serialize_session_measurement_history(patient):
+    patient_sessions = list(
+        ExamSession.objects.filter(patient=patient)
+        .order_by("-created_at")
+        .values("id", "session_pin", "created_at", "status")
+    )
+    if not patient_sessions:
+        return [], {}, []
+
+    session_meta = {
+        str(session["id"]): {
+            "session_pin": session["session_pin"],
+            "session_status": session["status"],
+            "session_created_at": session["created_at"],
+        }
+        for session in patient_sessions
+    }
+    session_ids = [session["id"] for session in patient_sessions]
+
+    measurement_entries = list(
+        Measurement.objects.filter(session_id__in=session_ids)
+        .order_by("-measured_at", "-id")
+    )
+
+    history_rows_map = {}
+
+    for entry in reversed(measurement_entries):
+        measurement_type = (entry.type or "").strip().lower()
+        session_id_str = str(entry.session_id)
+        row_key = session_id_str
+        row = history_rows_map.setdefault(
+            row_key,
+            {
+                "session_id": session_id_str,
+                "measured_timestamps": [],
+                "height_values": [],
+                "heart_rate_values": [],
+                "spo2_values": [],
+            },
+        )
+
+        if entry.measured_at:
+            row["measured_timestamps"].append(entry.measured_at)
+
+        if measurement_type in {"height", "height_cm"}:
+            row["height_values"].append(float(entry.value))
+        elif measurement_type == "heart_rate":
+            row["heart_rate_values"].append(float(entry.value))
+        elif measurement_type == "spo2":
+            row["spo2_values"].append(float(entry.value))
+
+    history_rows = []
+    for row in history_rows_map.values():
+        average_measured_at = None
+        if row["measured_timestamps"]:
+            total_seconds = sum(timestamp.timestamp() for timestamp in row["measured_timestamps"])
+            average_seconds = total_seconds / len(row["measured_timestamps"])
+            average_measured_at = datetime.fromtimestamp(average_seconds, tz=dt_timezone.utc)
+
+        history_rows.append(
+            {
+                "session_id": row["session_id"],
+                "measured_at": average_measured_at,
+                "height_cm": round(sum(row["height_values"]) / len(row["height_values"]), 2) if row["height_values"] else None,
+                "spo2_percent": round(sum(row["spo2_values"]) / len(row["spo2_values"]), 2) if row["spo2_values"] else None,
+                "heart_rate_bpm": round(sum(row["heart_rate_values"]) / len(row["heart_rate_values"]), 2) if row["heart_rate_values"] else None,
+            }
+        )
+
+    history_rows.sort(
+        key=lambda row: row["measured_at"] or timezone.now(),
+        reverse=True,
+    )
+
+    chart_points = {
+        "height": [],
+        "heart_rate": [],
+        "spo2": [],
+    }
+    for row in reversed(history_rows):
+        label = row["measured_at"].strftime("%d/%m %H:%M") if row["measured_at"] else "Sans date"
+        measured_at = row["measured_at"].isoformat() if row["measured_at"] else None
+        if row["height_cm"] is not None:
+            chart_points["height"].append(
+                {"label": label, "value": float(row["height_cm"]), "unit": "cm", "measured_at": measured_at}
+            )
+        if row["heart_rate_bpm"] is not None:
+            chart_points["heart_rate"].append(
+                {"label": label, "value": float(row["heart_rate_bpm"]), "unit": "bpm", "measured_at": measured_at}
+            )
+        if row["spo2_percent"] is not None:
+            chart_points["spo2"].append(
+                {"label": label, "value": float(row["spo2_percent"]), "unit": "%", "measured_at": measured_at}
+            )
+
+    measurement_type_choices = []
+    if chart_points["height"]:
+        measurement_type_choices.append({"value": "height", "label": "Taille"})
+    if chart_points["heart_rate"]:
+        measurement_type_choices.append({"value": "heart_rate", "label": "Frequence cardiaque"})
+    if chart_points["spo2"]:
+        measurement_type_choices.append({"value": "spo2", "label": "SpO2"})
+
+    return history_rows, chart_points, measurement_type_choices
+
+
+def _get_exam_session_by_pin(session_pin):
+    return (
+        ExamSession.objects.select_related("patient", "patient__etablissement")
+        .filter(session_pin=session_pin, status__in=["pending", "active", "completed", "cancelled", "expired"])
+        .order_by("-created_at")
+        .first()
+    )
+
+
+def _build_exam_session_wait_state(exam_session, measurement_rows):
+    if not exam_session:
+        return {
+            "should_poll": False,
+            "stage": "missing",
+            "message": "Aucune session ne correspond a ce PIN.",
+        }
+
+    if exam_session.is_pending:
+        return {
+            "should_poll": True,
+            "stage": "activation",
+            "message": "Activation en cours. La page verifie automatiquement quand la borne passe la session a l'etat active.",
+        }
+
+    missing_measurements = [row for row in measurement_rows if not row["is_ready"]]
+    if exam_session.is_active and missing_measurements:
+        return {
+            "should_poll": True,
+            "stage": "measurements",
+            "message": "Session active. En attente des mesures taille, frequence cardiaque et SpO2 depuis la borne.",
+        }
+
+    return {
+        "should_poll": False,
+        "stage": "ready",
+        "message": "Les mesures disponibles ont ete chargees.",
+    }
+
+
+def _generate_unique_session_pin():
     for _ in range(20):
         candidate = f"{secrets.randbelow(1000000):06d}"
-        if not ExamSessionActivationPin.objects.filter(session_pin=candidate).exists():
+        if not ExamSession.objects.filter(session_pin=candidate).exists():
             return candidate
     raise RuntimeError("Impossible de generer un PIN unique.")
+
+
+def _normalize_session_pin(value):
+    normalized_pin = "".join(char for char in str(value or "") if char.isdigit())
+    if len(normalized_pin) != 6:
+        raise ValueError("Le PIN session doit contenir exactement 6 chiffres.")
+    return normalized_pin
 
 
 def _db_table_exists(table_name):
@@ -254,22 +451,24 @@ def _db_table_exists(table_name):
 
 
 def health_professional_session_lookup(request):
+    if request.method == "GET":
+        requested_pin = (request.GET.get("session_pin") or "").strip()
+        if requested_pin:
+            return redirect("health_professional_session_detail", session_pin=requested_pin)
+
     form = HealthProfessionalSessionCreateForm(request.POST or None)
-    generated_activation = None
+    generated_session = None
     patient_context = None
 
     if request.method == "POST" and form.is_valid():
-        if not _db_table_exists(ExamSessionActivationPin._meta.db_table):
-            form.add_error(
-                None,
-                "La table des PIN de session n'existe pas encore. Appliquez le script SQL `create_exam_session_activation_pins.sql`.",
-            )
+        if not _db_table_exists(ExamSession._meta.db_table):
+            form.add_error(None, "La table exam_sessions est introuvable.")
             return render(
                 request,
                 "kiosk/session_lookup.html",
                 {
                     "session_create_form": form,
-                    "generated_activation": generated_activation,
+                    "generated_session": generated_session,
                     "patient_context": patient_context,
                 },
             )
@@ -286,78 +485,308 @@ def health_professional_session_lookup(request):
         else:
             try:
                 now = timezone.now()
-                ExamSessionActivationPin.objects.filter(patient=patient, status="pending").update(
-                    status="expired",
-                    updated_at=now,
-                )
-                created_by_user_id = request.session.get("user_id") or None
-                generated_activation = ExamSessionActivationPin.objects.create(
-                    patient=patient,
-                    created_by_user_id=created_by_user_id,
-                    session_pin=_generate_unique_activation_pin(),
-                    status="pending",
-                    expires_at=now + timedelta(minutes=30),
+                current_user_id = request.session.get("user_id") or None
+                generated_session = ExamSession.objects.create(
                     created_at=now,
-                    updated_at=now,
+                    device_id=None,
+                    consent_id=None,
+                    user_id=current_user_id,
+                    rfid_tag_uid=None,
+                    status="pending",
+                    patient=patient,
+                    session_pin=_generate_unique_session_pin(),
+                    mode="patient",
                 )
                 patient_context = _build_patient_context_from_patient(patient)
-            except (ProgrammingError, OperationalError):
-                form.add_error(
-                    None,
-                    "La table des PIN de session n'existe pas encore. Appliquez le script SQL `create_exam_session_activation_pins.sql`.",
-                )
+            except (ProgrammingError, OperationalError, IntegrityError) as exc:
+                form.add_error(None, str(exc))
 
     return render(
         request,
         "kiosk/session_lookup.html",
         {
             "session_create_form": form,
-            "generated_activation": generated_activation,
+            "generated_session": generated_session,
             "patient_context": patient_context,
+            "generated_status_url": (
+                reverse("exam_session_status_api", args=[generated_session.session_pin]) if generated_session else None
+            ),
+            "generated_detail_url": (
+                reverse("health_professional_session_detail", args=[generated_session.session_pin]) if generated_session else None
+            ),
         },
     )
 
 
 def health_professional_session_detail(request, session_pin):
-    normalized_pin = "".join(char for char in (session_pin or "") if char.isdigit())
-    if len(normalized_pin) != 6:
+    try:
+        normalized_pin = _normalize_session_pin(session_pin)
+    except ValueError:
         messages.error(request, "Le PIN session doit contenir exactement 6 chiffres.")
         return redirect("health_professional_session_lookup")
 
     exam_session = None
-    candidate_sessions = (
-        ExamSession.objects.select_related("patient", "patient__etablissement")
-        .filter(status__in=["active", "completed", "cancelled", "expired"])
-        .order_by("-created_at")[:250]
-    )
-    for candidate in candidate_sessions:
-        if candidate.session_pin == normalized_pin:
-            exam_session = candidate
-            break
+    exam_session = _get_exam_session_by_pin(normalized_pin)
 
     if not exam_session:
-        messages.error(request, "Aucune session active ou recente ne correspond a ce PIN.")
+        messages.error(request, "Aucun PIN de session actif ou recent ne correspond a ce code.")
         return redirect("health_professional_session_lookup")
 
-    latest_vital_sign = (
-        PatientVitalSign.objects.filter(exam_session_id=exam_session.id).order_by("-measured_at", "-created_at").first()
-    )
-    result_summary = getattr(latest_vital_sign, "notes", None)
-    if not result_summary:
-        result_summary = "La session est disponible. Les mesures ci-dessous correspondent aux captures deja enregistrees pour cette session."
+    latest_vital_sign = None
+    latest_measurement_at = None
+    result_summary = None
+    measurement_rows = []
+    wait_state = None
+    history_rows = []
+    history_chart_points = {}
+    history_measurement_types = []
+    history_enabled = False
+    if exam_session:
+        latest_vital_sign = _get_exam_session_measurement_snapshot(exam_session)
+        latest_measurement_at = _get_measurement_snapshot_measured_at(latest_vital_sign)
+        measurement_rows = _build_exam_session_measurement_rows(latest_vital_sign)
+        wait_state = _build_exam_session_wait_state(exam_session, measurement_rows)
+        result_summary = latest_vital_sign.get("notes") if isinstance(latest_vital_sign, dict) else None
+        if not result_summary:
+            if exam_session.is_pending:
+                result_summary = wait_state["message"]
+            elif wait_state["stage"] == "measurements":
+                result_summary = wait_state["message"]
+            else:
+                result_summary = "La session est disponible. Les mesures ci-dessous correspondent aux captures deja enregistrees pour cette session."
+        if exam_session.patient:
+            history_rows, history_chart_points, history_measurement_types = _serialize_session_measurement_history(
+                exam_session.patient
+            )
+        history_enabled = all(row["is_ready"] for row in measurement_rows)
+
+    patient_context = None
+    if exam_session:
+        patient_context = _build_exam_session_patient_context(exam_session)
 
     return render(
         request,
         "kiosk/session_detail.html",
         {
             "kiosk_session": exam_session,
-            "patient_context": _build_exam_session_patient_context(exam_session),
-            "measurement_rows": _build_exam_session_measurement_rows(latest_vital_sign),
+            "display_pin": normalized_pin,
+            "patient_context": patient_context,
+            "measurement_rows": measurement_rows,
             "latest_vital_sign": latest_vital_sign,
+            "latest_measurement_at": latest_measurement_at,
+            "wait_state": wait_state,
             "result_summary": result_summary,
+            "history_rows": history_rows,
+            "history_chart_points_json": json.dumps(history_chart_points),
+            "history_measurement_types": history_measurement_types,
+            "history_enabled": history_enabled,
             "result_recommendations": [],
             "session_create_form": HealthProfessionalSessionCreateForm(),
         },
+    )
+
+
+def health_professional_session_history(request, session_pin):
+    try:
+        normalized_pin = _normalize_session_pin(session_pin)
+    except ValueError:
+        messages.error(request, "Le PIN session doit contenir exactement 6 chiffres.")
+        return redirect("health_professional_session_lookup")
+
+    exam_session = _get_exam_session_by_pin(normalized_pin)
+    if not exam_session or not exam_session.patient:
+        messages.error(request, "Historique introuvable pour cette session.")
+        return redirect("health_professional_session_lookup")
+
+    history_rows, history_chart_points, history_measurement_types = _serialize_session_measurement_history(
+        exam_session.patient
+    )
+    if history_rows:
+        fallback_chart_points = {
+            "height": [],
+            "heart_rate": [],
+            "spo2": [],
+        }
+        for row in reversed(history_rows):
+            label = row["measured_at"].strftime("%d/%m %H:%M") if row["measured_at"] else "Sans date"
+            measured_at = row["measured_at"].isoformat() if row["measured_at"] else None
+            if row["height_cm"] is not None:
+                fallback_chart_points["height"].append(
+                    {"label": label, "value": float(row["height_cm"]), "unit": "cm", "measured_at": measured_at}
+                )
+            if row["heart_rate_bpm"] is not None:
+                fallback_chart_points["heart_rate"].append(
+                    {"label": label, "value": float(row["heart_rate_bpm"]), "unit": "bpm", "measured_at": measured_at}
+                )
+            if row["spo2_percent"] is not None:
+                fallback_chart_points["spo2"].append(
+                    {"label": label, "value": float(row["spo2_percent"]), "unit": "%", "measured_at": measured_at}
+                )
+        history_chart_points = fallback_chart_points
+
+    view_mode = (request.GET.get("view") or "table").strip().lower()
+    if view_mode not in {"table", "chart"}:
+        view_mode = "table"
+
+    available_metric_values = [item["value"] for item in history_measurement_types]
+    selected_metric = (request.GET.get("metric") or "").strip().lower()
+    if selected_metric not in available_metric_values:
+        selected_metric = available_metric_values[0] if available_metric_values else ""
+
+    return render(
+        request,
+        "kiosk/session_history.html",
+        {
+            "kiosk_session": exam_session,
+            "display_pin": normalized_pin,
+            "patient_context": _build_exam_session_patient_context(exam_session),
+            "history_rows": history_rows,
+            "history_chart_points_json": json.dumps(history_chart_points),
+            "history_measurement_types": history_measurement_types,
+            "view_mode": view_mode,
+            "selected_metric": selected_metric,
+        },
+    )
+
+
+def exam_session_status_api(request, session_pin):
+    try:
+        normalized_pin = _normalize_session_pin(session_pin)
+    except ValueError as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+
+    exam_session = _get_exam_session_by_pin(normalized_pin)
+    if not exam_session:
+        return JsonResponse({"ok": False, "error": "Session introuvable."}, status=404)
+
+    latest_vital_sign = _get_exam_session_measurement_snapshot(exam_session)
+    measurement_rows = _build_exam_session_measurement_rows(latest_vital_sign)
+    wait_state = _build_exam_session_wait_state(exam_session, measurement_rows)
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "session_id": str(exam_session.id),
+            "status": exam_session.status,
+            "is_pending": exam_session.is_pending,
+            "is_active": exam_session.is_active,
+            "wait_stage": wait_state["stage"],
+            "should_poll": wait_state["should_poll"],
+            "measurement_rows": [
+                {
+                    "key": row["key"],
+                    "label": row["label"],
+                    "display_value": row["display_value"],
+                    "is_ready": row["is_ready"],
+                }
+                for row in measurement_rows
+            ],
+        }
+    )
+
+
+@csrf_exempt
+def abandon_exam_session(request, session_pin):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST required."}, status=405)
+
+    try:
+        normalized_pin = _normalize_session_pin(session_pin)
+    except ValueError as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+
+    exam_session = _get_exam_session_by_pin(normalized_pin)
+    if not exam_session:
+        return JsonResponse({"ok": True, "deleted": False})
+
+    if exam_session.status == "completed":
+        return JsonResponse({"ok": True, "deleted": False, "reason": "completed"})
+
+    with transaction.atomic():
+        Measurement.objects.filter(session_id=exam_session.id).delete()
+        exam_session.delete()
+
+    return JsonResponse({"ok": True, "deleted": True})
+
+
+def activate_patient_exam_session(request):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST required."}, status=405)
+
+    if not _db_table_exists(ExamSession._meta.db_table):
+        return JsonResponse({"ok": False, "error": "La table exam_sessions est introuvable."}, status=500)
+
+    try:
+        payload = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Corps JSON invalide."}, status=400)
+
+    try:
+        normalized_pin = _normalize_session_pin(payload.get("session_pin"))
+    except ValueError as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+
+    device_id = (payload.get("device_id") or "").strip()
+    consent_id_raw = (payload.get("consent_id") or "").strip()
+    rfid_tag_uid = (payload.get("rfid_tag_uid") or "").strip() or None
+    if not device_id:
+        return JsonResponse({"ok": False, "error": "device_id est obligatoire."}, status=400)
+
+    if not consent_id_raw:
+        return JsonResponse({"ok": False, "error": "consent_id est obligatoire."}, status=400)
+
+    try:
+        consent_id = uuid.UUID(consent_id_raw)
+    except (TypeError, ValueError):
+        return JsonResponse({"ok": False, "error": "consent_id doit etre un UUID valide."}, status=400)
+
+    try:
+        with transaction.atomic():
+            exam_session = (
+                ExamSession.objects.select_related("patient", "patient__etablissement")
+                .filter(session_pin=normalized_pin)
+                .order_by("-created_at")
+                .first()
+            )
+            if not exam_session:
+                return JsonResponse({"ok": False, "error": "Aucune session en attente ne correspond a ce code."}, status=404)
+
+            if exam_session.status == "active":
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "already_activated": True,
+                        "session_id": str(exam_session.id),
+                        "session_pin": exam_session.session_pin or normalized_pin,
+                        "status": exam_session.status,
+                        "mode": exam_session.mode,
+                        "patient_id": str(exam_session.patient_id) if exam_session.patient_id else None,
+                    }
+                )
+
+            if exam_session.status != "pending":
+                return JsonResponse({"ok": False, "error": "Cette session ne peut plus etre activee."}, status=409)
+
+            now = timezone.now()
+            exam_session.device_id = device_id
+            exam_session.consent_id = consent_id
+            exam_session.rfid_tag_uid = rfid_tag_uid
+            exam_session.status = "active"
+            exam_session.save(update_fields=["device_id", "consent_id", "rfid_tag_uid", "status"])
+
+    except (ProgrammingError, OperationalError, IntegrityError) as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=500)
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "session_id": str(exam_session.id),
+            "session_pin": exam_session.session_pin or normalized_pin,
+            "status": exam_session.status,
+            "mode": exam_session.mode,
+            "patient_id": str(exam_session.patient_id) if exam_session.patient_id else None,
+            "device_id": exam_session.device_id,
+        }
     )
 
 

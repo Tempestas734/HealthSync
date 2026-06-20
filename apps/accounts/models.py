@@ -624,8 +624,24 @@ class PatientVitalSign(models.Model):
         return f"{self.systolic_bp or '-'} / {self.diastolic_bp or '-'} mmHg"
 
 
+class Measurement(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    session_id = models.UUIDField()
+    type = models.TextField()
+    value = models.DecimalField(max_digits=10, decimal_places=2)
+    unit = models.TextField()
+    measured_at = models.DateTimeField()
+    source = models.TextField(default="sensor")
+
+    class Meta:
+        managed = False
+        db_table = "measurements"
+        ordering = ("-measured_at", "-id")
+
+
 class ExamSession(models.Model):
     STATUS_CHOICES = (
+        ("pending", "En attente"),
         ("active", "Active"),
         ("completed", "Terminee"),
         ("cancelled", "Annulee"),
@@ -634,8 +650,8 @@ class ExamSession(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     created_at = models.DateTimeField()
-    device_id = models.TextField()
-    consent_id = models.UUIDField()
+    device_id = models.TextField(null=True, blank=True)
+    consent_id = models.UUIDField(null=True, blank=True)
     user = models.ForeignKey(
         AppUser,
         on_delete=models.SET_NULL,
@@ -645,7 +661,7 @@ class ExamSession(models.Model):
         related_name="exam_sessions",
     )
     rfid_tag_uid = models.TextField(null=True, blank=True)
-    status = models.TextField(default="active")
+    status = models.TextField(default="pending")
     patient = models.ForeignKey(
         Patient,
         on_delete=models.SET_NULL,
@@ -654,8 +670,8 @@ class ExamSession(models.Model):
         db_column="patient_id",
         related_name="exam_sessions",
     )
-    family_id = models.UUIDField(null=True, blank=True)
-    family_member_id = models.UUIDField(null=True, blank=True)
+    session_pin = models.TextField(null=True, blank=True)
+    mode = models.TextField(default="guest")
 
     class Meta:
         managed = False
@@ -673,54 +689,6 @@ class ExamSession(models.Model):
     @property
     def is_active(self):
         return self.status == "active"
-
-    @property
-    def session_pin(self):
-        digits = "".join(char for char in str(self.id) if char.isdigit())
-        if len(digits) < 6:
-            digits = f"{self.id.int % 1000000:06d}"
-        return digits[-6:]
-
-
-class ExamSessionActivationPin(models.Model):
-    STATUS_CHOICES = (
-        ("pending", "En attente"),
-        ("activated", "Activee"),
-        ("expired", "Expiree"),
-        ("cancelled", "Annulee"),
-    )
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    patient = models.ForeignKey(
-        Patient,
-        on_delete=models.CASCADE,
-        db_column="patient_id",
-        related_name="exam_session_activation_pins",
-    )
-    created_by_user = models.ForeignKey(
-        AppUser,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        db_column="created_by_user_id",
-        related_name="created_exam_session_activation_pins",
-    )
-    session_pin = models.CharField(max_length=6, unique=True)
-    status = models.TextField(default="pending")
-    exam_session_id = models.UUIDField(null=True, blank=True)
-    expires_at = models.DateTimeField(null=True, blank=True)
-    activated_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = "exam_session_activation_pins"
-        ordering = ("-created_at",)
-
-    @property
-    def status_display_name(self):
-        return dict(self.STATUS_CHOICES).get(self.status, self.status)
 
     @property
     def is_pending(self):

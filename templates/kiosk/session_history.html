@@ -1,0 +1,159 @@
+{% extends "base/base.html" %}
+
+{% block title %}Historique patient{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-5xl px-6 pb-10 lg:px-8">
+    <div class="rounded-3xl border border-surface-container bg-white p-6 shadow-sm">
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-[0.22em] text-primary">Historique patient</p>
+                <h1 class="mt-2 text-3xl font-extrabold headline-font text-on-surface">{{ patient_context.full_name }}</h1>
+                <p class="mt-2 text-sm text-on-surface-variant">PIN {{ display_pin }}</p>
+            </div>
+            <div class="flex gap-3">
+                <a class="{% if view_mode == 'table' %}rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white{% else %}rounded-2xl border border-surface-container px-4 py-3 text-sm font-bold text-on-surface{% endif %}" href="?view=table">Tableau</a>
+                <a class="{% if view_mode == 'chart' %}rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white{% else %}rounded-2xl border border-surface-container px-4 py-3 text-sm font-bold text-on-surface{% endif %}" href="?view=chart{% if selected_metric %}&metric={{ selected_metric }}{% endif %}">Graphe</a>
+                <a class="rounded-2xl border border-surface-container px-4 py-3 text-sm font-bold text-on-surface" href="{% url 'health_professional_session_detail' display_pin %}">Retour</a>
+            </div>
+        </div>
+
+        {% if view_mode == 'table' %}
+        <div class="mt-8 overflow-hidden rounded-3xl border border-surface-container">
+            <table class="min-w-full divide-y divide-surface-container bg-white text-sm">
+                <thead class="bg-surface-container-low">
+                    <tr>
+                        <th class="px-4 py-3 text-left font-bold uppercase tracking-[0.16em] text-on-surface-variant">Date</th>
+                        <th class="px-4 py-3 text-left font-bold uppercase tracking-[0.16em] text-on-surface-variant">Taille</th>
+                        <th class="px-4 py-3 text-left font-bold uppercase tracking-[0.16em] text-on-surface-variant">SpO2</th>
+                        <th class="px-4 py-3 text-left font-bold uppercase tracking-[0.16em] text-on-surface-variant">Heart beat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-container">
+                    {% for row in history_rows %}
+                    <tr>
+                        <td class="px-4 py-3 text-on-surface">{{ row.measured_at|date:"d/m/Y H:i" }}</td>
+                        <td class="px-4 py-3 text-on-surface">{{ row.height_cm|default:"-" }}</td>
+                        <td class="px-4 py-3 text-on-surface">{{ row.spo2_percent|default:"-" }}</td>
+                        <td class="px-4 py-3 text-on-surface">{{ row.heart_rate_bpm|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="px-4 py-4 text-on-surface-variant" colspan="4">Aucun historique disponible.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <form class="mt-8 flex items-center gap-3" method="get">
+            <input name="view" type="hidden" value="chart">
+            <label class="text-sm font-bold text-on-surface" for="metric">Mesure</label>
+            <select class="rounded-2xl border border-surface-container px-4 py-3 text-sm font-semibold text-on-surface" id="metric" name="metric" onchange="this.form.submit()">
+                {% for item in history_measurement_types %}
+                <option value="{{ item.value }}" {% if item.value == selected_metric %}selected{% endif %}>{{ item.label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        {{ history_chart_points_json|json_script:"history-chart-data" }}
+        <div class="mt-6 rounded-3xl border border-surface-container bg-surface-container-low p-5">
+            <h2 class="text-xl font-extrabold text-on-surface">{{ selected_metric|default:"Mesure" }} dans le temps</h2>
+            <div class="relative mt-6">
+                <svg class="h-72 w-full" id="history-chart-svg" viewBox="0 0 760 260" preserveAspectRatio="none"></svg>
+                <div class="pointer-events-none absolute hidden rounded-2xl bg-slate-950 px-3 py-2 text-xs text-white shadow-xl" id="history-chart-tooltip"></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{% if view_mode == 'chart' %}
+<script>
+(() => {
+  const chartSvg = document.getElementById("history-chart-svg");
+  const chartTooltip = document.getElementById("history-chart-tooltip");
+  const chartDataNode = document.getElementById("history-chart-data");
+  if (!chartSvg || !chartDataNode) {
+    return;
+  }
+
+  const chartData = JSON.parse(chartDataNode.textContent || "{}");
+  const metricKey = "{{ selected_metric|escapejs }}";
+  const points = chartData[metricKey] || [];
+
+  if (!points.length) {
+    chartSvg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#64748b" font-size="16">Aucune donnee disponible</text>';
+    return;
+  }
+
+  const width = 760;
+  const height = 260;
+  const padding = 40;
+  const values = points.map((point) => point.value);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const spread = Math.max(maxValue - minValue, 1);
+  const timestamps = points.map((point) => point.measured_at ? new Date(point.measured_at).getTime() : null);
+  const validTimestamps = timestamps.filter((value) => value !== null);
+  const minTimestamp = validTimestamps.length ? Math.min(...validTimestamps) : null;
+  const maxTimestamp = validTimestamps.length ? Math.max(...validTimestamps) : null;
+  const timestampSpread = Math.max((maxTimestamp ?? 0) - (minTimestamp ?? 0), 1);
+
+  const polylinePoints = points.map((point, index) => {
+    const pointTimestamp = point.measured_at ? new Date(point.measured_at).getTime() : null;
+    const x = pointTimestamp === null || minTimestamp === null
+      ? padding + ((width - padding * 2) / Math.max(points.length - 1, 1)) * index
+      : padding + ((pointTimestamp - minTimestamp) / timestampSpread) * (width - padding * 2);
+    const normalized = (point.value - minValue) / spread;
+    const y = height - padding - normalized * (height - padding * 2);
+    return {x, y, label: point.label, value: point.value, unit: point.unit || "", measuredAt: point.measured_at};
+  });
+
+  const polyline = polylinePoints.map((point) => `${point.x},${point.y}`).join(" ");
+  const circles = polylinePoints.map(
+    (point, index) => `<g class="history-chart-point" data-point-index="${index}"><circle cx="${point.x}" cy="${point.y}" r="5" fill="#0f766e"></circle></g>`
+  ).join("");
+
+  chartSvg.innerHTML = `
+    <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="#cbd5e1" stroke-width="1"></line>
+    <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height - padding}" stroke="#cbd5e1" stroke-width="1"></line>
+    <polyline fill="none" stroke="#0f766e" stroke-width="3" points="${polyline}"></polyline>
+    ${circles}
+  `;
+
+  const pointNodes = Array.from(chartSvg.querySelectorAll(".history-chart-point"));
+  const hideTooltip = () => {
+    if (chartTooltip) {
+      chartTooltip.classList.add("hidden");
+    }
+  };
+  const showTooltip = (event, point) => {
+    if (!chartTooltip) {
+      return;
+    }
+    const dateLabel = point.measuredAt ? new Date(point.measuredAt).toLocaleString() : point.label;
+    chartTooltip.innerHTML = `<div class="font-bold">${point.value} ${point.unit}</div><div class="mt-1">${dateLabel}</div>`;
+    chartTooltip.classList.remove("hidden");
+    const rect = chartSvg.getBoundingClientRect();
+    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+    chartTooltip.style.left = `${clientX - rect.left + 12}px`;
+    chartTooltip.style.top = `${clientY - rect.top - 12}px`;
+  };
+
+  pointNodes.forEach((node, index) => {
+    const point = polylinePoints[index];
+    node.addEventListener("mouseenter", (event) => showTooltip(event, point));
+    node.addEventListener("mousemove", (event) => showTooltip(event, point));
+    node.addEventListener("mouseleave", hideTooltip);
+    node.addEventListener("touchstart", (event) => showTooltip(event, point), {passive: true});
+    node.addEventListener("touchmove", (event) => showTooltip(event, point), {passive: true});
+    node.addEventListener("touchend", hideTooltip);
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}
